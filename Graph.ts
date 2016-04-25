@@ -55,6 +55,32 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+
+    //Initial setup
+    //Cost to get to a specific node from the start node, start to start is 0
+    var gCost = new collections.Dictionary<Node,number>();
+    gCost.setValue(start, 0);
+    //Cost if taking path through this node to goal
+    var fCost = new collections.Dictionary<Node,number>();
+    fCost.setValue(start, heuristics(start));
+    //PriorityQueue to handle which is supposed to be closest atm
+    var nextToVisit = new collections.PriorityQueue<Node>(graph.compareNodes);
+    nextToVisit.add(start);
+
+    //Whenever there is a new node to visit, do it
+    while (!nextToVisit.isEmpty){
+      var edges = graph.outgoingEdges(nextToVisit[0]);
+      for(var edge of edges){
+        var node = edge.to;
+        if(goal(node)){
+          //Goal node is found should start to return the path
+        }
+        var heuristicCost = heuristics(node);
+      }
+    }
+
+
+
     // A dummy search result: it just picks the first possible neighbour
     var result : SearchResult<Node> = {
         path: [start],
