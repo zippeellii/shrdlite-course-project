@@ -69,10 +69,12 @@ function aStarSearch<Node> (
     //PriorityQueue to handle which is supposed to be closest atm
     var nextToVisit = new collections.PriorityQueue<Node>(
       function(firstNode: Node, secondNode: Node) : number {
-        if(gCost.getValue(firstNode) + heuristics(firstNode) < (gCost.getValue(secondNode) + heuristics(secondNode))){
+        var firstValue = gCost.getValue(firstNode) + heuristics(firstNode);
+        var secondValue = gCost.getValue(secondNode) + heuristics(secondNode);
+        if(firstValue < secondValue){
           return 1;
         }
-        else if((gCost.getValue(firstNode) + heuristics(firstNode)) == (gCost.getValue(secondNode) + heuristics(secondNode))){
+        else if(firstValue == secondValue){
           return 0;
         }
         else{
@@ -104,16 +106,16 @@ function aStarSearch<Node> (
       for(var edge of edges){
         if(processed.contains(edge.to)) continue;
 
-        var node = edge.to;
-        if(gCost.getValue(node) == undefined || gCost.getValue(node) > gCost.getValue(edge.from) + edge.cost){
+        var neighbour = edge.to;
+        if(gCost.getValue(neighbour) == undefined || gCost.getValue(neighbour) > gCost.getValue(edge.from) + edge.cost){
           //New gValue is what cost to parent + edge
-          gCost.setValue(node, edge.cost + gCost.getValue(edge.from));
+          gCost.setValue(neighbour, edge.cost + gCost.getValue(edge.from));
           //Add as parent
-          bestParent.setValue(node, edge.from);
+          bestParent.setValue(neighbour, edge.from);
           //New expected is actual cost to this node + heuristics
-          fCost.setValue(node, gCost.getValue(node) + heuristics(node));
+          fCost.setValue(neighbour, gCost.getValue(neighbour) + heuristics(neighbour));
 
-          nextToVisit.add(node);
+          nextToVisit.add(neighbour);
         }
       }
     }
