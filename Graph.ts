@@ -55,19 +55,71 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
-    // A dummy search result: it just picks the first possible neighbour
-    var result : SearchResult<Node> = {
-        path: [start],
-        cost: 0
-    };
-    while (result.path.length < 3) {
-        var edge : Edge<Node> = graph.outgoingEdges(start) [0];
-        if (! edge) break;
-        start = edge.to;
-        result.path.push(start);
-        result.cost += edge.cost;
+    //Initial setup
+    var processed = new collections.Set<Node>();
+    //Store the path, i.e what parent that has the shortest path for me
+    var bestParent = new collections.Dictionary<Node, Node>();
+    bestParent.setValue(start, undefined);
+    //Cost to get to a specific node from the start node, start to start is 0
+    var gCost = new collections.Dictionary<Node,number>();
+    gCost.setValue(start, 0);
+    //Cost if taking path through this node to goal
+    var fCost = new collections.Dictionary<Node,number>();
+    fCost.setValue(start, heuristics(start));
+    //PriorityQueue to handle which is supposed to be closest atm
+    var nextToVisit = new collections.PriorityQueue<Node>(
+      function(firstNode: Node, secondNode: Node) : number {
+        var firstValue = gCost.getValue(firstNode) + heuristics(firstNode);
+        var secondValue = gCost.getValue(secondNode) + heuristics(secondNode);
+        if(firstValue < secondValue){
+          return 1;
+        }
+        else if(firstValue == secondValue){
+          return 0;
+        }
+        else{
+          return -1;
+        }
+      });
+    nextToVisit.add(start);
+
+    //Whenever there is a new node to visit, do it
+    while (!nextToVisit.isEmpty()){
+      var currentNode = nextToVisit.dequeue();
+      if(goal(currentNode)){
+        var pathNode = currentNode;
+        var path = new Array();
+        while(bestParent.getValue(pathNode) != undefined){
+          path.push(pathNode);
+          pathNode = bestParent.getValue(pathNode);
+        }
+        path.reverse();
+        var result : SearchResult<Node> = {
+            path: path,
+            cost: gCost.getValue(currentNode)
+        };
+        return result;
+
+      }
+      processed.add(currentNode);
+      var edges = graph.outgoingEdges(currentNode);
+      for(var edge of edges){
+        if(processed.contains(edge.to)) continue;
+
+        var neighbour = edge.to;
+        if(gCost.getValue(neighbour) == undefined || gCost.getValue(neighbour) > gCost.getValue(edge.from) + edge.cost){
+          //New gValue is what cost to parent + edge
+          gCost.setValue(neighbour, edge.cost + gCost.getValue(edge.from));
+          //Add as parent
+          bestParent.setValue(neighbour, edge.from);
+          //New expected is actual cost to this node + heuristics
+          fCost.setValue(neighbour, gCost.getValue(neighbour) + heuristics(neighbour));
+
+          nextToVisit.add(neighbour);
+        }
+      }
     }
-    return result;
+    return undefined;
 }
 
 
