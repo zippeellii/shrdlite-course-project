@@ -63,9 +63,6 @@ function aStarSearch<Node> (
     //Cost to get to a specific node from the start node, start to start is 0
     var gCost = new collections.Dictionary<Node,number>();
     gCost.setValue(start, 0);
-    //Cost if taking path through this node to goal
-    var fCost = new collections.Dictionary<Node,number>();
-    fCost.setValue(start, heuristics(start));
     //PriorityQueue to handle which is supposed to be closest atm
     var nextToVisit = new collections.PriorityQueue<Node>(
       function(firstNode: Node, secondNode: Node) : number {
@@ -112,8 +109,6 @@ function aStarSearch<Node> (
           gCost.setValue(neighbour, edge.cost + gCost.getValue(edge.from));
           //Add as parent
           bestParent.setValue(neighbour, edge.from);
-          //New expected is actual cost to this node + heuristics
-          fCost.setValue(neighbour, gCost.getValue(neighbour) + heuristics(neighbour));
 
           nextToVisit.add(neighbour);
         }
@@ -121,5 +116,3 @@ function aStarSearch<Node> (
     }
     return undefined;
 }
-
-
