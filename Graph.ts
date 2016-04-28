@@ -12,25 +12,25 @@
 
 /** An edge in a graph. */
 class Edge<Node> {
-    from : Node;
-    to   : Node;
-    cost : number;
+  from: Node;
+  to: Node;
+  cost: number;
 }
 
 /** A directed graph. */
 interface Graph<Node> {
-    /** Computes the edges that leave from a node. */
-    outgoingEdges(node : Node) : Edge<Node>[];
-    /** A function that compares nodes. */
-    compareNodes : collections.ICompareFunction<Node>;
+  /** Computes the edges that leave from a node. */
+  outgoingEdges(node: Node): Edge<Node>[];
+  /** A function that compares nodes. */
+  compareNodes: collections.ICompareFunction<Node>;
 }
 
 /** Type that reports the result of a search. */
 class SearchResult<Node> {
-    /** The path (sequence of Nodes) found by the search algorithm. */
-    path : Node[];
-    /** The total cost of the path. */
-    cost : number;
+  /** The path (sequence of Nodes) found by the search algorithm. */
+  path: Node[];
+  /** The total cost of the path. */
+  cost: number;
 }
 
 /**
@@ -48,143 +48,167 @@ class SearchResult<Node> {
 * @param timeout Maximum time to spend performing A\* search.
 * @returns A search result, which contains the path from `start` to a node satisfying `goal` and the cost of this path.
 */
-function aStarSearch<Node> (
-    graph : Graph<Node>,
-    start : Node,
-    goal : (n:Node) => boolean,
-    heuristics : (n:Node) => number,
-    timeout : number
-) : SearchResult<Node> {
+function aStarSearch<Node>(
+  graph: Graph<Node>,
+  start: Node,
+  goal: (n: Node) => boolean,
+  heuristics: (n: Node) => number,
+  timeout: number
+  ): SearchResult<Node> {
+  let bestNode = start;
+  let gCost = new collections.Dictionary<Node, number>();
+  gCost.setValue(start, 0);
+  let paths = new collections.Dictionary<Node, Node>();
+  paths.setValue(start, null);
 
-    //Initial setup
-    //Cost to get to a specific node from the start node, start to start is 0
-    var gCost = new collections.Dictionary<Node,number>();
-    gCost.setValue(start, 0);
-    //Cost if taking path through this node to goal
-    var fCost = new collections.Dictionary<Node,number>();
-    fCost.setValue(start, heuristics(start));
-    //PriorityQueue to handle which is supposed to be closest atm
-    var nextToVisit = new collections.PriorityQueue<Node>(graph.compareNodes);
-    nextToVisit.add(start);
+  let f = function(a: Node, b: Node): number {
+    return gCost.getValue(b) + heuristics(b) - (gCost.getValue(a) + heuristics(a));
+  };
 
-    //Whenever there is a new node to visit, do it
-    while (!nextToVisit.isEmpty){
-      var edges = graph.outgoingEdges(nextToVisit[0]);
-      for(var edge of edges){
-        var node = edge.to;
-        if(goal(node)){
-          //Goal node is found should start to return the path
+  let frontier = new collections.PriorityQueue<Node>(f);
+  // Add start node
+  frontier.add(start);
+
+  while (!goal(bestNode)) {
+
+    bestNode = frontier.dequeue();
+    for (let edge of graph.outgoingEdges(bestNode)) {
+      let edgeCost = edge.cost;
+      let gNew = gCost.getValue(edge.from) + edgeCost;
+      if (gCost.containsKey(edge.to)) {
+        let gOld = gCost.getValue(edge.to);
+        if (gNew < gOld) {
+          gCost.setValue(edge.to, gNew);
+          paths.setValue(edge.to, edge.from);
+          frontier.enqueue(edge.to);
         }
-        var heuristicCost = heuristics(node);
-      }
-    }
-
-
-
-    // A dummy search result: it just picks the first possible neighbour
-    var result : SearchResult<Node> = {
-        path: [start],
-        cost: 0
+      } else {
+        gCost.setValue(edge.to, gNew);
+        paths.setValue(edge.to, edge.from);
+        frontier.enqueue(edge.to);
+      };
     };
-    while (result.path.length < 3) {
-        var edge : Edge<Node> = graph.outgoingEdges(start) [0];
-        if (! edge) break;
-        start = edge.to;
-        result.path.push(start);
-        result.cost += edge.cost;
-    }
-    return result;
-}
+  };
+  let bestPath: Node[] = [];
+  let cost = gCost.getValue(bestNode);
+  while (bestNode != null) {
+    bestPath.unshift(bestNode);
+    bestNode = paths.getValue(bestNode);
+  }
+  let result = new SearchResult<Node>();
+  result.path = bestPath;
+  result.cost = cost;
+  return result;
+
+
+};
+
+
+
+// // A dummy search result: it just picks the first possible neighbour
+// var result: SearchResult<Node> = {
+//   path: [start],
+//   cost: 0
+// };
+// while (result.path.length < 3) {
+//   var edge: Edge<Node> = graph.outgoingEdges(start)[0];
+//   if (!edge) break;
+//   start = edge.to;
+//   result.path.push(start);
+//   result.cost += edge.cost;
+// }
+// return result;
+// }
 
 
 //////////////////////////////////////////////////////////////////////
 // here is an example graph
 
 interface Coordinate {
-    x : number;
-    y : number;
+  x: number;
+  y: number;
 }
 
 
 class GridNode {
-    constructor(
-        public pos : Coordinate
-    ) {}
+  constructor(
+    public pos: Coordinate
+    ) { }
 
-    add(delta : Coordinate) : GridNode {
-        return new GridNode({
-            x: this.pos.x + delta.x,
-            y: this.pos.y + delta.y
-        });
-    }
+  add(delta: Coordinate): GridNode {
+    return new GridNode({
+      x: this.pos.x + delta.x,
+      y: this.pos.y + delta.y
+    });
+  }
 
-    compareTo(other : GridNode) : number {
-        return (this.pos.x - other.pos.x) || (this.pos.y - other.pos.y);
-    }
+  compareTo(other: GridNode): number {
+    return (this.pos.x - other.pos.x) || (this.pos.y - other.pos.y);
+  }
 
-    toString() : string {
-        return "(" + this.pos.x + "," + this.pos.y + ")";
-    }
+  toString(): string {
+    return "(" + this.pos.x + "," + this.pos.y + ")";
+  }
 }
 
 /** Example Graph. */
 class GridGraph implements Graph<GridNode> {
-    private walls : collections.Set<GridNode>;
+  private walls: collections.Set<GridNode>;
 
-    constructor(
-        public size : Coordinate,
-        obstacles : Coordinate[]
+  constructor(
+    public size: Coordinate,
+    obstacles: Coordinate[]
     ) {
-        this.walls = new collections.Set<GridNode>();
-        for (var pos of obstacles) {
-            this.walls.add(new GridNode(pos));
-        }
-        for (var x = -1; x <= size.x; x++) {
-            this.walls.add(new GridNode({x:x, y:-1}));
-            this.walls.add(new GridNode({x:x, y:size.y}));
-        }
-        for (var y = -1; y <= size.y; y++) {
-            this.walls.add(new GridNode({x:-1, y:y}));
-            this.walls.add(new GridNode({x:size.x, y:y}));
-        }
+    this.walls = new collections.Set<GridNode>();
+    for (var pos of obstacles) {
+      this.walls.add(new GridNode(pos));
     }
+    for (var x = -1; x <= size.x; x++) {
+      this.walls.add(new GridNode({ x: x, y: -1 }));
+      this.walls.add(new GridNode({ x: x, y: size.y }));
+    }
+    for (var y = -1; y <= size.y; y++) {
+      this.walls.add(new GridNode({ x: -1, y: y }));
+      this.walls.add(new GridNode({ x: size.x, y: y }));
+    }
+  }
 
-    outgoingEdges(node : GridNode) : Edge<GridNode>[] {
-        var outgoing : Edge<GridNode>[] = [];
-        for (var dx = -1; dx <= 1; dx++) {
-            for (var dy = -1; dy <= 1; dy++) {
-                if (! (dx == 0 && dy == 0)) {
-                    var next = node.add({x:dx, y:dy});
-                    if (! this.walls.contains(next)) {
-                        outgoing.push({
-                            from: node,
-                            to: next,
-                            cost: Math.sqrt(dx*dx + dy*dy)
-                        });
-                    }
-                }
-            }
+  outgoingEdges(node: GridNode): Edge<GridNode>[] {
+    var outgoing: Edge<GridNode>[] = [];
+    for (var dx = -1; dx <= 1; dx++) {
+      for (var dy = -1; dy <= 1; dy++) {
+        if (!(dx == 0 && dy == 0)) {
+          var next = node.add({ x: dx, y: dy });
+          if (!this.walls.contains(next)) {
+            outgoing.push({
+              from: node,
+              to: next,
+              cost: Math.sqrt(dx * dx + dy * dy)
+            });
+          }
         }
-        return outgoing;
+      }
     }
+    return outgoing;
+  }
 
-    compareNodes(a : GridNode, b : GridNode) : number {
-        return a.compareTo(b);
-    }
+  compareNodes(a: GridNode, b: GridNode): number {
+    return a.compareTo(b);
+  }
 
-    toString() : string {
-        var borderRow = "+" + new Array(this.size.x + 1).join("--+");
-        var betweenRow = "+" + new Array(this.size.x + 1).join("  +");
-        var str = "\n" + borderRow + "\n";
-        for (var y = this.size.y-1; y >= 0; y--) {
-            str += "|";
-            for (var x = 0; x < this.size.x; x++) {
-                str += this.walls.contains(new GridNode({x:x,y:y})) ? "## " : "   ";
-            }
-            str += "|\n";
-            if (y > 0) str += betweenRow + "\n";
-        }
-        str += borderRow + "\n";
-        return str;
+  toString(): string {
+    var borderRow = "+" + new Array(this.size.x + 1).join("--+");
+    var betweenRow = "+" + new Array(this.size.x + 1).join("  +");
+    var str = "\n" + borderRow + "\n";
+    for (var y = this.size.y - 1; y >= 0; y--) {
+      str += "|";
+      for (var x = 0; x < this.size.x; x++) {
+        str += this.walls.contains(new GridNode({ x: x, y: y })) ? "## " : "   ";
+      }
+      str += "|\n";
+      if (y > 0) str += betweenRow + "\n";
     }
+    str += borderRow + "\n";
+    return str;
+  }
 }
