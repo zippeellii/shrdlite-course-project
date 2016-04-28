@@ -48,78 +48,57 @@ class SearchResult<Node> {
 * @param timeout Maximum time (in seconds) to spend performing A\* search.
 * @returns A search result, which contains the path from `start` to a node satisfying `goal` and the cost of this path.
 */
-function aStarSearch<Node> (
-    graph : Graph<Node>,
-    start : Node,
-    goal : (n:Node) => boolean,
-    heuristics : (n:Node) => number,
-    timeout : number
-) : SearchResult<Node> {
-    //Initial setup
-    var processed = new collections.Set<Node>();
-    //Store the path, i.e what parent that has the shortest path for me
-    var bestParent = new collections.Dictionary<Node, Node>();
-    bestParent.setValue(start, undefined);
-    //Cost to get to a specific node from the start node, start to start is 0
-    var gCost = new collections.Dictionary<Node,number>();
-    gCost.setValue(start, 0);
-    //Cost if taking path through this node to goal
-    var fCost = new collections.Dictionary<Node,number>();
-    fCost.setValue(start, heuristics(start));
-    //PriorityQueue to handle which is supposed to be closest atm
-    var nextToVisit = new collections.PriorityQueue<Node>(
-      function(firstNode: Node, secondNode: Node) : number {
-        var firstValue = gCost.getValue(firstNode) + heuristics(firstNode);
-        var secondValue = gCost.getValue(secondNode) + heuristics(secondNode);
-        if(firstValue < secondValue){
-          return 1;
+function aStarSearch<Node>(
+  graph: Graph<Node>,
+  start: Node,
+  goal: (n: Node) => boolean,
+  heuristics: (n: Node) => number,
+  timeout: number
+  ): SearchResult<Node> {
+  let bestNode = start;
+  let gCost = new collections.Dictionary<Node, number>();
+  gCost.setValue(start, 0);
+  let paths = new collections.Dictionary<Node, Node>();
+  paths.setValue(start, null);
+
+  let f = function(a: Node, b: Node): number {
+    return gCost.getValue(b) + heuristics(b) - (gCost.getValue(a) + heuristics(a));
+  };
+
+  let frontier = new collections.PriorityQueue<Node>(f);
+  // Add start node
+  frontier.add(start);
+
+  while (!goal(bestNode)) {
+
+    bestNode = frontier.dequeue();
+    for (let edge of graph.outgoingEdges(bestNode)) {
+      let edgeCost = edge.cost;
+      let gNew = gCost.getValue(edge.from) + edgeCost;
+      if (gCost.containsKey(edge.to)) {
+        let gOld = gCost.getValue(edge.to);
+        if (gNew < gOld) {
+          gCost.setValue(edge.to, gNew);
+          paths.setValue(edge.to, edge.from);
+          frontier.enqueue(edge.to);
         }
-        else if(firstValue == secondValue){
-          return 0;
-        }
-        else{
-          return -1;
-        }
-      });
-    nextToVisit.add(start);
-
-    //Whenever there is a new node to visit, do it
-    while (!nextToVisit.isEmpty()){
-      var currentNode = nextToVisit.dequeue();
-      if(goal(currentNode)){
-        var pathNode = currentNode;
-        var path = new Array();
-        while(bestParent.getValue(pathNode) != undefined){
-          path.push(pathNode);
-          pathNode = bestParent.getValue(pathNode);
-        }
-        path.reverse();
-        var result : SearchResult<Node> = {
-            path: path,
-            cost: gCost.getValue(currentNode)
-        };
-        return result;
-
-      }
-      processed.add(currentNode);
-      var edges = graph.outgoingEdges(currentNode);
-      for(var edge of edges){
-        if(processed.contains(edge.to)) continue;
-
-        var neighbour = edge.to;
-        if(gCost.getValue(neighbour) == undefined || gCost.getValue(neighbour) > gCost.getValue(edge.from) + edge.cost){
-          //New gValue is what cost to parent + edge
-          gCost.setValue(neighbour, edge.cost + gCost.getValue(edge.from));
-          //Add as parent
-          bestParent.setValue(neighbour, edge.from);
-          //New expected is actual cost to this node + heuristics
-          fCost.setValue(neighbour, gCost.getValue(neighbour) + heuristics(neighbour));
-
-          nextToVisit.add(neighbour);
-        }
-      }
-    }
-    return undefined;
-}
+      } else {
+        gCost.setValue(edge.to, gNew);
+        paths.setValue(edge.to, edge.from);
+        frontier.enqueue(edge.to);
+      };
+    };
+  };
+  let bestPath: Node[] = [];
+  let cost = gCost.getValue(bestNode);
+  while (bestNode != null) {
+    bestPath.unshift(bestNode);
+    bestNode = paths.getValue(bestNode);
+  }
+  let result = new SearchResult<Node>();
+  result.path = bestPath;
+  result.cost = cost;
+  return result;
 
 
+};

@@ -2545,69 +2545,53 @@ var SearchResult = (function () {
 * @returns A search result, which contains the path from `start` to a node satisfying `goal` and the cost of this path.
 */
 function aStarSearch(graph, start, goal, heuristics, timeout) {
-    //Initial setup
-    var processed = new collections.Set();
-    //Store the path, i.e what parent that has the shortest path for me
-    var bestParent = new collections.Dictionary();
-    bestParent.setValue(start, undefined);
-    //Cost to get to a specific node from the start node, start to start is 0
+    var bestNode = start;
     var gCost = new collections.Dictionary();
     gCost.setValue(start, 0);
-    //Cost if taking path through this node to goal
-    var fCost = new collections.Dictionary();
-    fCost.setValue(start, heuristics(start));
-    //PriorityQueue to handle which is supposed to be closest atm
-    var nextToVisit = new collections.PriorityQueue(function (firstNode, secondNode) {
-        var firstValue = gCost.getValue(firstNode) + heuristics(firstNode);
-        var secondValue = gCost.getValue(secondNode) + heuristics(secondNode);
-        if (firstValue < secondValue) {
-            return 1;
-        }
-        else if (firstValue == secondValue) {
-            return 0;
-        }
-        else {
-            return -1;
-        }
-    });
-    nextToVisit.add(start);
-    //Whenever there is a new node to visit, do it
-    while (!nextToVisit.isEmpty()) {
-        var currentNode = nextToVisit.dequeue();
-        if (goal(currentNode)) {
-            var pathNode = currentNode;
-            var path = new Array();
-            while (bestParent.getValue(pathNode) != undefined) {
-                path.push(pathNode);
-                pathNode = bestParent.getValue(pathNode);
+    var paths = new collections.Dictionary();
+    paths.setValue(start, null);
+    var f = function (a, b) {
+        return gCost.getValue(b) + heuristics(b) - (gCost.getValue(a) + heuristics(a));
+    };
+    var frontier = new collections.PriorityQueue(f);
+    // Add start node
+    frontier.add(start);
+    while (!goal(bestNode)) {
+        bestNode = frontier.dequeue();
+        for (var _i = 0, _a = graph.outgoingEdges(bestNode); _i < _a.length; _i++) {
+            var edge = _a[_i];
+            var edgeCost = edge.cost;
+            var gNew = gCost.getValue(edge.from) + edgeCost;
+            if (gCost.containsKey(edge.to)) {
+                var gOld = gCost.getValue(edge.to);
+                if (gNew < gOld) {
+                    gCost.setValue(edge.to, gNew);
+                    paths.setValue(edge.to, edge.from);
+                    frontier.enqueue(edge.to);
+                }
             }
-            path.reverse();
-            var result = {
-                path: path,
-                cost: gCost.getValue(currentNode)
-            };
-            return result;
-        }
-        processed.add(currentNode);
-        var edges = graph.outgoingEdges(currentNode);
-        for (var _i = 0, edges_1 = edges; _i < edges_1.length; _i++) {
-            var edge = edges_1[_i];
-            if (processed.contains(edge.to))
-                continue;
-            var neighbour = edge.to;
-            if (gCost.getValue(neighbour) == undefined || gCost.getValue(neighbour) > gCost.getValue(edge.from) + edge.cost) {
-                //New gValue is what cost to parent + edge
-                gCost.setValue(neighbour, edge.cost + gCost.getValue(edge.from));
-                //Add as parent
-                bestParent.setValue(neighbour, edge.from);
-                //New expected is actual cost to this node + heuristics
-                fCost.setValue(neighbour, gCost.getValue(neighbour) + heuristics(neighbour));
-                nextToVisit.add(neighbour);
+            else {
+                gCost.setValue(edge.to, gNew);
+                paths.setValue(edge.to, edge.from);
+                frontier.enqueue(edge.to);
             }
+            ;
         }
+        ;
     }
-    return undefined;
+    ;
+    var bestPath = [];
+    var cost = gCost.getValue(bestNode);
+    while (bestNode != null) {
+        bestPath.unshift(bestNode);
+        bestNode = paths.getValue(bestNode);
+    }
+    var result = new SearchResult();
+    result.path = bestPath;
+    result.cost = cost;
+    return result;
 }
+;
 ///<reference path="Graph.ts"/>
 var GridNode = (function () {
     function GridNode(pos) {
