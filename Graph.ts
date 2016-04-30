@@ -86,10 +86,12 @@ function aStarSearch<Node> (
       if(goal(currentNode)){
         var pathNode = currentNode;
         var path = new Array();
+        //Find the entire path
         while(bestParent.getValue(pathNode) != undefined){
           path.push(pathNode);
           pathNode = bestParent.getValue(pathNode);
         }
+        //Reverse path to match expected output
         path.reverse();
         var result : SearchResult<Node> = {
             path: path,
