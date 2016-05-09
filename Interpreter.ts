@@ -3,12 +3,12 @@
 
 /**
 * Interpreter module
-* 
+*
 * The goal of the Interpreter module is to interpret a sentence
 * written by the user in the context of the current world state. In
 * particular, it must figure out which objects in the world,
 * i.e. which elements in the `objects` field of WorldState, correspond
-* to the ones referred to in the sentence. 
+* to the ones referred to in the sentence.
 *
 * Moreover, it has to derive what the intended goal state is and
 * return it as a logical formula described in terms of literals, where
@@ -34,7 +34,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 * @param parses List of parses produced by the Parser.
 * @param currentState The current state of the world.
 * @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
-*/    
+*/
     export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
         var errors : Error[] = [];
         var interpretations : InterpretationResult[] = [];
@@ -76,7 +76,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         polarity : boolean;
 	/** The name of the relation in question. */
         relation : string;
-	/** The arguments to the relation. Usually these will be either objects 
+	/** The arguments to the relation. Usually these will be either objects
      * or special strings such as "floor" or "floor-N" (where N is a column) */
         args : string[];
     }
@@ -114,8 +114,228 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             {polarity: true, relation: "ontop", args: [a, "floor"]},
             {polarity: true, relation: "holding", args: [b]}
         ]];
-        return interpretation;
+
+        console.log(cmd);
+        console.log(state);
+
+        // var command = cmd.command;
+        // var entityID = findEntityID(cmd.entity, state);
+        // if (entityID) {
+        //     console.log(entityID);
+        //     // Find which functions should be applied where
+        //     // Call some recursive functions
+        //     // Return the results
+        // } else {
+        //     console.log(entityID);
+        //     // Return some sort of error, not possible in this world state
+        // }
+
+        return interpretation; // Remove
     }
 
-}
+    // Will return an array of strings corresponding to the objects that
+    // match a given entity, implemented recursively so takes in node as
+    // type (could use a wrapper function lol)
+    function findEntityID(node : any, state : WorldState) : String[] {
 
+        // Is location
+        if (node.entity && node.relation) {
+            var entity = findEntityID(node.entity, state);
+
+            if (node.relation == "leftof") {
+                // Return all objects left of the entites
+                var distanceFromLeftAllowed = state.stacks.length-1;
+                for (let i = distanceFromLeftAllowed; i >= 0; i--) {
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        if (entity.indexOf(state.stacks[i][j]) > -1) {
+                            distanceFromLeftAllowed = i;
+                        }
+                    }
+                }
+                var tmp = [];
+                for (let i = 0; i < distanceFromLeftAllowed; i++) {
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        tmp.push(state.stacks[i][j]);
+                    }
+                }
+                return tmp;
+            } else if (node.relation == "rightof") {
+                // Return all objects right of the entites
+                var distanceFromLeftAllowed = 0;
+                for (let i = 0; i < state.stacks.length; i++) {
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        if (entity.indexOf(state.stacks[i][j]) > -1) {
+                            distanceFromLeftAllowed = i;
+                        }
+                    }
+                }
+                var tmp = [];
+                for (let i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        tmp.push(state.stacks[i][j]);
+                    }
+                }
+                return tmp;
+            } else if (node.relation == "inside") {
+                // Returns the objects that are inside all the entities
+
+                var tmp = [];
+
+                // Check so that all entities are boxes
+                for (let i = 0; i < entity.length; i++) {
+                    for (var key in state.objects) {
+                        if (key == entity[i]) {
+                            if (state.objects[key].form != "box") {
+                                return tmp;
+                            }
+                        }
+                    }
+                }
+
+                // TODO: Remove this non-general bad thing
+                for (let i = 0; i < state.stacks.length; i++) {
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        if (entity.indexOf(state.stacks[i][j]) > -1) {
+                            if (state.stacks[i][j+1]) {
+                                tmp.push(state.stacks[i][j+1]);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // TODO: Implement this general cool thing
+                // // Checks so that all are in same stack and that they are permutated correctly, if so, return what is inside
+                // for (let i = 0; i < state.stacks.length; i++) {
+                //     for (let j = 0; j < state.stacks[i].length; j++) {
+                //         // TODO
+                //     }
+                // }
+            } else if (node.relation == "ontop") {
+                // Returns objects directly on top of entity (will not work for more than one entity)
+                var tmp = [];
+                if(entity.length != 1) {
+                    return tmp;
+                }
+                for (let i = 0; i < state.stacks.length; i++) {
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        if (entity.indexOf(state.stacks[i][j]) > -1) {
+                            if (state.stacks[i][j+1]) {
+                                tmp.push(state.stacks[i][j+1]);
+                            }
+                        }
+                    }
+                }
+                return tmp;
+            } else if (node.realtion == "under") {
+                // Returns objects under (not just directly under) the entites
+
+                var tmp = [];
+
+                // Checks so that all are in same stack and returns what is under
+                for (let i = 0; i < state.stacks.length; i++) {
+                    var count = 0;
+                    var nbrOfEntities = entity.length;
+                    for (let j = state.stacks[i].length-1; j >= 0; j--) {
+                        if (nbrOfEntities == count) {
+                            // All entities was in this stack, start pushing what objects remain above
+                            tmp.push(state.stacks[i][j]);
+                        } else {
+                            if (entity.indexOf(state.stacks[i][j]) > -1) {
+                                count = count + 1;
+                            }
+                        }
+                    }
+                }
+                return tmp;
+            } else if (node.relation == "beside") {
+                // Return all objects beside the entity
+
+                var tmp = [];
+
+                var columnsWithEntities = [];
+
+                // Finds columns which has entities inside them and
+                // fills columnsWithEntities accordingly
+                for (let i = 0; i < state.stacks.length; i++) {
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        if (entity.indexOf(state.stacks[i][j]) > -1) {
+                            columnsWithEntities.push(i);
+                            break;
+                        }
+                    }
+                }
+
+                // Adds the entities in the "allowed" rows
+                for (let i = 0; i < state.stacks.length; i++) {
+                    if (columnsWithEntities.indexOf(i) >= 0) {
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            tmp.push(state.stacks[i][j]);
+                        }
+                    }
+                }
+
+                return tmp;
+            } else if (node.relation == "above") {
+                // Returns objects above (not just directly above) the entites
+
+                var tmp = [];
+
+                // Checks so that all are in same stack and returns what is above
+                for (let i = 0; i < state.stacks.length; i++) {
+                    var count = 0;
+                    var nbrOfEntities = entity.length;
+                    for (let j = 0; j < state.stacks[i].length; j++) {
+                        if (nbrOfEntities == count) {
+                            // All entities was in this stack, start pushing what objects remain above
+                            tmp.push(state.stacks[i][j]);
+                        } else {
+                            if (entity.indexOf(state.stacks[i][j]) > -1) {
+                                count = count + 1;
+                            }
+                        }
+                    }
+                }
+
+                return tmp;
+            }
+        }
+
+        // Is entity
+        if (node.quantifier && node.object) {
+            if (node.quantifier == "any" || node.quantifier == "the") {
+                // Returns first value from collection
+                var tmp = [];
+                tmp.push(findEntityID(node.object, state)[0]);
+                return tmp;
+            } else if (node.quantifier == "all") {
+                // Returns whole collection
+                return findEntityID(node.object, state);
+            }
+        }
+
+        // Is complex object
+        if (node.location && node.object) {
+            return [];
+        }
+
+        // Is simple object
+        if (node.form) {
+            var results = [];
+            for (var key in state.objects) { // TODO: Should return list of all that fits the attributes of node that actually are set, not use ==
+                if (state.objects[key].color == node.color &&
+                    state.objects[key].form == node.form &&
+                    state.objects[key].size == node.size) {
+                        // The matching object was found
+                        results.push(key);
+                        return results;
+                    }
+            }
+            // Did not find matching object in the world
+            return [];
+        }
+
+        // Was not any known node, return error
+        return [];
+    }
+}
