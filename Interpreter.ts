@@ -107,6 +107,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
         // This returns a dummy interpretation involving two random objects in the world
+        var command = cmd.command;
+        var entity = cmd.entity;
+        var location = cmd.location;
+        console.log("Object: " + findObject(cmd.entity.object, state));
+
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
@@ -115,8 +120,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             {polarity: true, relation: "holding", args: [b]}
         ]];
 
-        console.log(cmd);
-        console.log(state);
+        // console.log(cmd);
+        // console.log(state);
+        console.log("________");
+        var entities = findEntityID(cmd.entity, state);
+        console.log(entities);
+        console.log("________");
 
         // var command = cmd.command;
         // var entityID = findEntityID(cmd.entity, state);
@@ -133,16 +142,50 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return interpretation; // Remove
     }
 
+    function findObject(object : Parser.Object, state : WorldState) : string {
+      //No more recursive objects
+      if(object.object == undefined){
+        //For all objects, find one matching
+        for(var obj in state.objects){
+          var other = state.objects[obj];
+          if(validForm(object, other.form) && validSize(object, other.size) && validColor(object, other.color)){
+            return obj;
+          }
+        }
+      }
+      return undefined;
+    }
+    function validForm(object : Parser.Object, worldObject : string ) : boolean {
+      if(object.form == undefined || object.form == null || object.form == "anyform"){
+        return true;
+      }
+      return object.form == worldObject;
+    }
+    function validSize(object : Parser.Object, worldObject : string) : boolean {
+      if(object.size == undefined || object.size == null){
+        return true;
+      }
+      return object.size == worldObject;
+    }
+    function validColor(object : Parser.Object, worldObject : string) : boolean {
+      if(object.color == null || object.color == undefined){
+        return true;
+      }
+      return object.color == worldObject;
+    }
+
     // Will return an array of strings corresponding to the objects that
     // match a given entity, implemented recursively so takes in node as
     // type (could use a wrapper function lol)
-    function findEntityID(node : any, state : WorldState) : String[] {
+    function findEntityID(node : any, state : WorldState) : string[] {
 
         // Is location
         if (node.entity && node.relation) {
+            console.log("location");
             var entity = findEntityID(node.entity, state);
 
             if (node.relation == "leftof") {
+                console.log("- leftof");
                 // Return all objects left of the entites
                 var distanceFromLeftAllowed = state.stacks.length-1;
                 for (let i = distanceFromLeftAllowed; i >= 0; i--) {
@@ -152,7 +195,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                         }
                     }
                 }
-                var tmp = [];
+                var tmp : string[] = [];
                 for (let i = 0; i < distanceFromLeftAllowed; i++) {
                     for (let j = 0; j < state.stacks[i].length; j++) {
                         tmp.push(state.stacks[i][j]);
@@ -160,6 +203,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
                 return tmp;
             } else if (node.relation == "rightof") {
+                console.log("- rightof");
                 // Return all objects right of the entites
                 var distanceFromLeftAllowed = 0;
                 for (let i = 0; i < state.stacks.length; i++) {
@@ -169,7 +213,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                         }
                     }
                 }
-                var tmp = [];
+                var tmp : string[] = [];
                 for (let i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
                     for (let j = 0; j < state.stacks[i].length; j++) {
                         tmp.push(state.stacks[i][j]);
@@ -177,9 +221,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
                 return tmp;
             } else if (node.relation == "inside") {
+                console.log("- inside");
                 // Returns the objects that are inside all the entities
 
-                var tmp = [];
+                var tmp : string[] = [];
 
                 // Check so that all entities are boxes
                 for (let i = 0; i < entity.length; i++) {
@@ -212,8 +257,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 //     }
                 // }
             } else if (node.relation == "ontop") {
+                console.log("- ontop");
                 // Returns objects directly on top of entity (will not work for more than one entity)
-                var tmp = [];
+                var tmp : string[] = [];
                 if(entity.length != 1) {
                     return tmp;
                 }
@@ -228,9 +274,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
                 return tmp;
             } else if (node.realtion == "under") {
+                console.log("- under");
                 // Returns objects under (not just directly under) the entites
 
-                var tmp = [];
+                var tmp : string[] = [];
 
                 // Checks so that all are in same stack and returns what is under
                 for (let i = 0; i < state.stacks.length; i++) {
@@ -249,11 +296,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
                 return tmp;
             } else if (node.relation == "beside") {
+                console.log("- beside");
                 // Return all objects beside the entity
 
-                var tmp = [];
+                var tmp : string[] = [];
 
-                var columnsWithEntities = [];
+                var columnsWithEntities : number[] = [];
 
                 // Finds columns which has entities inside them and
                 // fills columnsWithEntities accordingly
@@ -277,9 +325,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
                 return tmp;
             } else if (node.relation == "above") {
+                console.log("- above");
                 // Returns objects above (not just directly above) the entites
 
-                var tmp = [];
+                var tmp : string[] = [];
 
                 // Checks so that all are in same stack and returns what is above
                 for (let i = 0; i < state.stacks.length; i++) {
@@ -302,13 +351,16 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         }
 
         // Is entity
-        if (node.quantifier && node.object) {
+        if (node.quantifier && node.object) {                                   // TODO: What should any / the return?
+            console.log("entity");
             if (node.quantifier == "any" || node.quantifier == "the") {
+                console.log("- any/the");
                 // Returns first value from collection
-                var tmp = [];
+                var tmp : string[] = [];
                 tmp.push(findEntityID(node.object, state)[0]);
                 return tmp;
             } else if (node.quantifier == "all") {
+                console.log("- all");
                 // Returns whole collection
                 return findEntityID(node.object, state);
             }
@@ -316,26 +368,13 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         // Is complex object
         if (node.location && node.object) {
+            console.log("complex object");
             return [];
         }
 
         // Is simple object
-        if (node.form) {
-            var results = [];
-            for (var key in state.objects) { // TODO: Should return list of all that fits the attributes of node that actually are set, not use ==
-                if (state.objects[key].color == node.color &&
-                    state.objects[key].form == node.form &&
-                    state.objects[key].size == node.size) {
-                        // The matching object was found
-                        results.push(key);
-                        return results;
-                    }
-            }
-            // Did not find matching object in the world
-            return [];
-        }
-
-        // Was not any known node, return error
-        return [];
+        var tmp : string[] = [];
+        tmp.push(findObject(node, state));
+        return tmp;
     }
 }

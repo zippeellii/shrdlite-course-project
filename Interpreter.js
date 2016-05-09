@@ -32,6 +32,10 @@ var Interpreter;
     }
     Interpreter.stringifyLiteral = stringifyLiteral;
     function interpretCommand(cmd, state) {
+        var command = cmd.command;
+        var entity = cmd.entity;
+        var location = cmd.location;
+        console.log("Object: " + findObject(cmd.entity.object, state));
         var objects = Array.prototype.concat.apply([], state.stacks);
         var a = objects[Math.floor(Math.random() * objects.length)];
         var b = objects[Math.floor(Math.random() * objects.length)];
@@ -39,14 +43,47 @@ var Interpreter;
                 { polarity: true, relation: "ontop", args: [a, "floor"] },
                 { polarity: true, relation: "holding", args: [b] }
             ]];
-        console.log(cmd);
-        console.log(state);
+        console.log("________");
+        var entities = findEntityID(cmd.entity, state);
+        console.log(entities);
+        console.log("________");
         return interpretation;
+    }
+    function findObject(object, state) {
+        if (object.object == undefined) {
+            for (var obj in state.objects) {
+                var other = state.objects[obj];
+                if (validForm(object, other.form) && validSize(object, other.size) && validColor(object, other.color)) {
+                    return obj;
+                }
+            }
+        }
+        return undefined;
+    }
+    function validForm(object, worldObject) {
+        if (object.form == undefined || object.form == null || object.form == "anyform") {
+            return true;
+        }
+        return object.form == worldObject;
+    }
+    function validSize(object, worldObject) {
+        if (object.size == undefined || object.size == null) {
+            return true;
+        }
+        return object.size == worldObject;
+    }
+    function validColor(object, worldObject) {
+        if (object.color == null || object.color == undefined) {
+            return true;
+        }
+        return object.color == worldObject;
     }
     function findEntityID(node, state) {
         if (node.entity && node.relation) {
+            console.log("location");
             var entity = findEntityID(node.entity, state);
             if (node.relation == "leftof") {
+                console.log("- leftof");
                 var distanceFromLeftAllowed = state.stacks.length - 1;
                 for (var i = distanceFromLeftAllowed; i >= 0; i--) {
                     for (var j = 0; j < state.stacks[i].length; j++) {
@@ -64,6 +101,7 @@ var Interpreter;
                 return tmp;
             }
             else if (node.relation == "rightof") {
+                console.log("- rightof");
                 var distanceFromLeftAllowed = 0;
                 for (var i = 0; i < state.stacks.length; i++) {
                     for (var j = 0; j < state.stacks[i].length; j++) {
@@ -81,6 +119,7 @@ var Interpreter;
                 return tmp;
             }
             else if (node.relation == "inside") {
+                console.log("- inside");
                 var tmp = [];
                 for (var i = 0; i < entity.length; i++) {
                     for (var key in state.objects) {
@@ -103,6 +142,7 @@ var Interpreter;
                 }
             }
             else if (node.relation == "ontop") {
+                console.log("- ontop");
                 var tmp = [];
                 if (entity.length != 1) {
                     return tmp;
@@ -119,6 +159,7 @@ var Interpreter;
                 return tmp;
             }
             else if (node.realtion == "under") {
+                console.log("- under");
                 var tmp = [];
                 for (var i = 0; i < state.stacks.length; i++) {
                     var count = 0;
@@ -137,6 +178,7 @@ var Interpreter;
                 return tmp;
             }
             else if (node.relation == "beside") {
+                console.log("- beside");
                 var tmp = [];
                 var columnsWithEntities = [];
                 for (var i = 0; i < state.stacks.length; i++) {
@@ -157,6 +199,7 @@ var Interpreter;
                 return tmp;
             }
             else if (node.relation == "above") {
+                console.log("- above");
                 var tmp = [];
                 for (var i = 0; i < state.stacks.length; i++) {
                     var count = 0;
@@ -176,30 +219,24 @@ var Interpreter;
             }
         }
         if (node.quantifier && node.object) {
+            console.log("entity");
             if (node.quantifier == "any" || node.quantifier == "the") {
+                console.log("- any/the");
                 var tmp = [];
                 tmp.push(findEntityID(node.object, state)[0]);
                 return tmp;
             }
             else if (node.quantifier == "all") {
+                console.log("- all");
                 return findEntityID(node.object, state);
             }
         }
         if (node.location && node.object) {
+            console.log("complex object");
             return [];
         }
-        if (node.form) {
-            var results = [];
-            for (var key in state.objects) {
-                if (state.objects[key].color == node.color &&
-                    state.objects[key].form == node.form &&
-                    state.objects[key].size == node.size) {
-                    results.push(key);
-                    return results;
-                }
-            }
-            return [];
-        }
-        return [];
+        var tmp = [];
+        tmp.push(findObject(node, state));
+        return tmp;
     }
 })(Interpreter || (Interpreter = {}));
