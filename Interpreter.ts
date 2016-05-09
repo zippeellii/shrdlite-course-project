@@ -142,18 +142,19 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return interpretation; // Remove
     }
 
-    function findObject(object : Parser.Object, state : WorldState) : string {
+    function findObject(object : Parser.Object, state : WorldState) : string[] {
       //No more recursive objects
+      var tmp : string[] = [];
       if(object.object == undefined){
         //For all objects, find one matching
         for(var obj in state.objects){
           var other = state.objects[obj];
           if(validForm(object, other.form) && validSize(object, other.size) && validColor(object, other.color)){
-            return obj;
+            tmp.push(obj);
           }
         }
       }
-      return undefined;
+      return tmp;
     }
     function validForm(object : Parser.Object, worldObject : string ) : boolean {
       if(object.form == undefined || object.form == null || object.form == "anyform"){
@@ -373,8 +374,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         }
 
         // Is simple object
-        var tmp : string[] = [];
-        tmp.push(findObject(node, state));
-        return tmp;
+        return findObject(node, state);
     }
 }
