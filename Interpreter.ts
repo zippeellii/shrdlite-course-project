@@ -115,17 +115,41 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
-        var interpretation : DNFFormula = [[
+        /*var interpretation : DNFFormula = [[
             {polarity: true, relation: "ontop", args: [a, "floor"]},
             {polarity: true, relation: "holding", args: [b]}
-        ]];
+        ]];*/
+        var tast : boolean = false;
+        for(var obj in state.objects){
+          tast = false;
+          for(var id in state.stacks){
+            if(state.stacks[id].indexOf(obj) > -1){
+              tast = true;
+            }
+          }
+          if(!tast){
+            delete state.objects[obj];
+          }
+        }
 
         // console.log(cmd);
-        // console.log(state);
+        console.log(state);
         console.log("________");
         var entities = findEntityID(cmd.entity, state);
         console.log(entities);
         console.log("________");
+        var interpretation : DNFFormula;
+
+        if (cmd.location) {
+          var locationEntities = findEntityID(cmd.location.entity, state);
+          interpretation = [[
+            {polarity: true, relation: cmd.location.relation, args: [entities[0], locationEntities[0]] }
+          ]];
+        } else {
+          interpretation = [[
+            {polarity: true, relation: "holding", args: [entities[0]]}
+          ]];
+        }
 
         // var command = cmd.command;
         // var entityID = findEntityID(cmd.entity, state);
