@@ -135,20 +135,21 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         // console.log(cmd);
         console.log(state);
         console.log("________");
-        var entities = findEntityID(cmd.entity, state);
-        console.log(entities);
+        var entities = findObject(cmd.entity.object, state);
+        console.log('Found number entities: ' + entities);
         console.log("________");
-        var interpretation : DNFFormula;
+        var interpretation : DNFFormula = [];
 
         if (cmd.location) {
+          console.log('Location found');
           var locationEntities = findEntityID(cmd.location.entity, state);
           interpretation = [[
             {polarity: true, relation: cmd.location.relation, args: [entities[0], locationEntities[0]] }
           ]];
         } else {
-          interpretation = [[
-            {polarity: true, relation: "holding", args: [entities[0]]}
-          ]];
+          for(var i = 0; i < entities.length; i++){
+            interpretation.push([{polarity: true, relation: "holding", args: [entities[i]]}]);
+          }
         }
 
         // var command = cmd.command;
@@ -172,8 +173,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
       if(object.object == undefined){
         //For all objects, find one matching
         for(var obj in state.objects){
+          console.log('Checking object: ' + obj);
           var other = state.objects[obj];
+          console.log(object);
           if(validForm(object, other.form) && validSize(object, other.size) && validColor(object, other.color)){
+            console.log('Adding object: ' + obj);
             tmp.push(obj);
           }
         }
