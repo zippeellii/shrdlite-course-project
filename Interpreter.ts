@@ -133,7 +133,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         }
 
         // console.log(cmd);
-        console.log(state);
+        //console.log(state);
         console.log("________");
         var entities = findEntityID(cmd.entity, state);
         console.log(entities);
@@ -142,6 +142,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         if (cmd.location) {
           var locationEntities = findEntityID(cmd.location.entity, state);
+          console.log("________");
           interpretation = [[
             {polarity: true, relation: cmd.location.relation, args: [entities[0], locationEntities[0]] }
           ]];
@@ -150,18 +151,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             {polarity: true, relation: "holding", args: [entities[0]]}
           ]];
         }
-
-        // var command = cmd.command;
-        // var entityID = findEntityID(cmd.entity, state);
-        // if (entityID) {
-        //     console.log(entityID);
-        //     // Find which functions should be applied where
-        //     // Call some recursive functions
-        //     // Return the results
-        // } else {
-        //     console.log(entityID);
-        //     // Return some sort of error, not possible in this world state
-        // }
 
         return interpretation; // Remove
     }
@@ -262,13 +251,21 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                     }
                 }
 
-                // TODO: Remove this non-general bad thing
+                // TODO: Only handles one level of boxes as of now
                 for (let i = 0; i < state.stacks.length; i++) {
+                    var boxFound = "";
                     for (let j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            if (state.stacks[i][j+1]) {
-                                tmp.push(state.stacks[i][j+1]);
-                                break;
+                        var object = state.stacks[i][j];
+                        if (boxFound != "") {
+                            // Check if item is eligble to fit in the box
+                            if (checkOnTopOf(state.stacks[i][j], boxFound)) {
+                                tmp.push(state.stacks[i][j]);
+                            }
+                            boxFound = "";
+                        } else {
+                            // Check if current object is in our entity, save it if it is
+                            if (entity.indexOf(state.stacks[i][j]) > -1) {
+                                boxFound = state.stacks[i][j];
                             }
                         }
                     }
@@ -399,5 +396,14 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         // Is simple object
         return findObject(node, state);
+    }
+
+    function getObjectFromID (id : string, state : WorldState) : ObjectDefinition {
+        for (var key in state.objects) {
+            if (key == id) {
+                return state.objects[key];
+            }
+        }
+        return undefined;
     }
 }
