@@ -158,34 +158,41 @@ var Interpreter;
                 delete state.objects[obj];
             }
         }
-        // console.log(cmd);
-<<<<<<< HEAD
-        //console.log(state);
-=======
+        console.log(cmd);
         console.log(state);
->>>>>>> af5fb1930abf7c2ddcc8fdf8291a961e90c8a930
         console.log("________");
-        var entities = findEntityID(cmd.entity, state);
-        console.log(entities);
+        var entities = findEntityID(cmd.entity.object, state);
+        console.log('Found number entities: ' + entities);
         console.log("________");
-        var interpretation;
+        var interpretation = [];
         if (cmd.location) {
+            console.log('Location found');
             var locationEntities = findEntityID(cmd.location.entity, state);
-<<<<<<< HEAD
-            console.log("________");
-=======
->>>>>>> af5fb1930abf7c2ddcc8fdf8291a961e90c8a930
-            interpretation = [[
-                    { polarity: true, relation: cmd.location.relation, args: [entities[0], locationEntities[0]] }
-                ]];
+            if (cmd.location.relation == 'inside') {
+                for (var i = 0; i < locationEntities.length; i++) {
+                    for (var j = 0; j < entities.length; j++) {
+                        if (checkBallInBox(state.objects[entities[j]], state.objects[locationEntities[i]])) {
+                            interpretation.push([{ polarity: true, relation: "inside", args: [entities[j], locationEntities[i]] }]);
+                        }
+                    }
+                }
+            }
+            if (cmd.location.relation == 'ontop') {
+                for (var i = 0; i < entities.length; i++) {
+                    for (var j = 0; j < locationEntities.length; j++) {
+                        if (state.objects[entities[i]].form != 'ball') {
+                            interpretation.push([{ polarity: true, relation: "ontop", args: [entities[i], locationEntities[j]] }]);
+                        }
+                    }
+                }
+            }
+            console.log('Location entities: ' + locationEntities);
         }
         else {
-            interpretation = [[
-                    { polarity: true, relation: "holding", args: [entities[0]] }
-                ]];
+            for (var i = 0; i < entities.length; i++) {
+                interpretation.push([{ polarity: true, relation: "holding", args: [entities[i]] }]);
+            }
         }
-<<<<<<< HEAD
-=======
         // var command = cmd.command;
         // var entityID = findEntityID(cmd.entity, state);
         // if (entityID) {
@@ -197,8 +204,67 @@ var Interpreter;
         //     console.log(entityID);
         //     // Return some sort of error, not possible in this world state
         // }
->>>>>>> af5fb1930abf7c2ddcc8fdf8291a961e90c8a930
+        console.log("Interpretations: " + interpretation);
+        if (interpretation.length == 0) {
+            return undefined;
+        }
         return interpretation; // Remove
+    }
+    //Check that object1 can be on top of object 2
+    //TODO: Need to implement pyramid etc.
+    function checkOnTopOf(object1, object2, state) {
+        var objects = state.objects;
+        //A ball cannot be on top of anything other than a box (inside) or the floor
+        //TODO: This should check the condition for floor aswell
+        if (objects[object1].form == 'ball' && objects[object2].form != 'box') {
+            return false;
+        }
+        //A ball cannot have anything ontop of itself
+        if (objects[object2].form == 'ball') {
+            return false;
+        }
+        //A small object cannot support a large object
+        if (objects[object1].size == 'large' && objects[object2].size == 'small') {
+            return false;
+        }
+        // A box cannot contain pyrmamids, planks or boxes of the same size
+        if (objects[object2].form == 'box') {
+            if (objects[object1].form == 'pyramid' || objects[object1].form == 'plank' || objects[object1].form == 'box') {
+                if (objects[object2].size == 'large' && objects[object2].size == 'large' || objects[object2].size == 'small') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    //Check that object1 can be above object2
+    function checkAbove(object1, object2, state) {
+        //For now, above need same properties as onTopOf
+        return checkOnTopOf(object1, object2, state);
+    }
+    //Check that object1 can be under object2
+    function checkUnder(object1, object2, state) {
+        //If one is under the other is above
+        return checkAbove(object2, object1, state);
+    }
+    //Check that object1 can be beside object2
+    function checkBeside(object1, object2, state) {
+        return true;
+    }
+    //Check that object1 can be left of object2
+    function checkLeftOf(object1, object2, state) {
+        //Return if object 2 is farmost to the left
+        return !(state.stacks[0].indexOf(object2) == -1);
+    }
+    //Check that object1 can be right of object2
+    function checkRightOf(object1, object2, state) {
+        return !(state.stacks[state.stacks.length].indexOf(object2));
+    }
+    function checkBallInBox(ball, box) {
+        if (ball.size == 'large' && box.size != 'large' || ball.size == 'small' && box.size == 'tiny' || ball.size == 'tiny' && box.size == 'tiny') {
+            return false;
+        }
+        return true;
     }
     function findObject(object, state) {
         //No more recursive objects
@@ -292,13 +358,22 @@ var Interpreter;
                         }
                     }
                 }
-                // TODO: Remove this non-general bad thing
+                // TODO: Right now this only handles one box
                 for (var i = 0; i < state.stacks.length; i++) {
+                    var boxFound = "";
                     for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            if (state.stacks[i][j + 1]) {
-                                tmp.push(state.stacks[i][j + 1]);
-                                break;
+                        var object = state.stacks[i][j];
+                        if (boxFound != "") {
+                            // Check if item is eligble to fit in the box
+                            if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
+                                tmp.push(state.stacks[i][j]);
+                            }
+                            boxFound = "";
+                        }
+                        else {
+                            // Check if current object is in our entity, save it if it is
+                            if (entity.indexOf(state.stacks[i][j]) > -1) {
+                                boxFound = state.stacks[i][j];
                             }
                         }
                     }
@@ -398,9 +473,7 @@ var Interpreter;
             if (node.quantifier == "any" || node.quantifier == "the") {
                 console.log("- any/the");
                 // Returns first value from collection
-                var tmp = [];
-                tmp.push(findEntityID(node.object, state)[0]);
-                return tmp;
+                return findEntityID(node.object, state);
             }
             else if (node.quantifier == "all") {
                 console.log("- all");
@@ -415,6 +488,14 @@ var Interpreter;
         }
         // Is simple object
         return findObject(node, state);
+    }
+    function getObjectFromID(id, state) {
+        for (var key in state.objects) {
+            if (key == id) {
+                return state.objects[key];
+            }
+        }
+        return undefined;
     }
 })(Interpreter || (Interpreter = {}));
 ///<reference path="World.ts"/>

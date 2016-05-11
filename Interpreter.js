@@ -169,163 +169,209 @@ var Interpreter;
             var entity = findEntityID(node.entity, state);
             if (node.relation == "leftof") {
                 console.log("- leftof");
-                var distanceFromLeftAllowed = state.stacks.length - 1;
-                for (var i = distanceFromLeftAllowed; i >= 0; i--) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            distanceFromLeftAllowed = i;
+                var tmp = [];
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    var distanceFromLeftAllowed = state.stacks.length - 1;
+                    for (var i = distanceFromLeftAllowed; i >= 0; i--) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                distanceFromLeftAllowed = i;
+                            }
                         }
                     }
-                }
-                var tmp = [];
-                for (var i = 0; i < distanceFromLeftAllowed; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        tmp.push(state.stacks[i][j]);
+                    for (var i = 0; i < distanceFromLeftAllowed; i++) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            innerTmp.push(state.stacks[i][j]);
+                        }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.relation == "rightof") {
                 console.log("- rightof");
-                var distanceFromLeftAllowed = 0;
-                for (var i = 0; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            distanceFromLeftAllowed = i;
+                var tmp = [];
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    var distanceFromLeftAllowed = 0;
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                distanceFromLeftAllowed = i;
+                            }
                         }
                     }
-                }
-                var tmp = [];
-                for (var i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        tmp.push(state.stacks[i][j]);
+                    for (var i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            innerTmp.push(state.stacks[i][j]);
+                        }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.relation == "inside") {
                 console.log("- inside");
                 var tmp = [];
-                for (var i = 0; i < entity.length; i++) {
-                    for (var key in state.objects) {
-                        if (key == entity[i]) {
-                            if (state.objects[key].form != "box") {
-                                return tmp;
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    for (var i = 0; i < entity[k].length; i++) {
+                        for (var key in state.objects) {
+                            if (key == entity[k][i]) {
+                                if (state.objects[key].form != "box") {
+                                    return tmp;
+                                }
                             }
                         }
                     }
-                }
-                for (var i = 0; i < state.stacks.length; i++) {
-                    var boxFound = "";
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        var object = state.stacks[i][j];
-                        if (boxFound != "") {
-                            if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
-                                tmp.push(state.stacks[i][j]);
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        var boxFound = "";
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            var object = state.stacks[i][j];
+                            if (boxFound != "") {
+                                if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
+                                    innerTmp.push(state.stacks[i][j]);
+                                }
+                                boxFound = "";
                             }
-                            boxFound = "";
-                        }
-                        else {
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                boxFound = state.stacks[i][j];
+                            else {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    boxFound = state.stacks[i][j];
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
+                return tmp;
             }
             else if (node.relation == "ontop") {
                 console.log("- ontop");
                 var tmp = [];
-                if (entity.length != 1) {
-                    return tmp;
-                }
-                for (var i = 0; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            if (state.stacks[i][j + 1]) {
-                                tmp.push(state.stacks[i][j + 1]);
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    if (entity[k].length != 1) {
+                        continue;
+                    }
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                if (state.stacks[i][j + 1]) {
+                                    innerTmp.push(state.stacks[i][j + 1]);
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.realtion == "under") {
                 console.log("- under");
-                var tmp = [];
-                for (var i = 0; i < state.stacks.length; i++) {
-                    var count = 0;
-                    var nbrOfEntities = entity.length;
-                    for (var j = state.stacks[i].length - 1; j >= 0; j--) {
-                        if (nbrOfEntities == count) {
-                            tmp.push(state.stacks[i][j]);
-                        }
-                        else {
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                count = count + 1;
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        var count = 0;
+                        var nbrOfEntities = entity[k].length;
+                        for (var j = state.stacks[i].length - 1; j >= 0; j--) {
+                            if (nbrOfEntities == count) {
+                                innerTmp.push(state.stacks[i][j]);
+                            }
+                            else {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    count = count + 1;
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.relation == "beside") {
                 console.log("- beside");
                 var tmp = [];
-                var columnsWithEntities = [];
-                for (var i = 0; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            columnsWithEntities.push(i);
-                            break;
-                        }
-                    }
-                }
-                for (var i = 0; i < state.stacks.length; i++) {
-                    if (columnsWithEntities.indexOf(i) >= 0) {
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    var columnsWithEntities = [];
+                    for (var i = 0; i < state.stacks.length; i++) {
                         for (var j = 0; j < state.stacks[i].length; j++) {
-                            tmp.push(state.stacks[i][j]);
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                columnsWithEntities.push(i);
+                                break;
+                            }
                         }
                     }
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        if (columnsWithEntities.indexOf(i) >= 0) {
+                            for (var j = 0; j < state.stacks[i].length; j++) {
+                                innerTmp.push(state.stacks[i][j]);
+                            }
+                        }
+                    }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.relation == "above") {
                 console.log("- above");
                 var tmp = [];
-                for (var i = 0; i < state.stacks.length; i++) {
-                    var count = 0;
-                    var nbrOfEntities = entity.length;
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (nbrOfEntities == count) {
-                            tmp.push(state.stacks[i][j]);
-                        }
-                        else {
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                count = count + 1;
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        var count = 0;
+                        var nbrOfEntities = entity[k].length;
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            if (nbrOfEntities == count) {
+                                innerTmp.push(state.stacks[i][j]);
+                            }
+                            else {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    count = count + 1;
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
         }
         if (node.quantifier && node.object) {
             console.log("entity");
-            if (node.quantifier == "any" || node.quantifier == "the") {
+            var entity = findEntityID(node.object, state);
+            if (node.quantifier == "the") {
+                if (entity.length == 1 && entity[0].length == 1) {
+                    return entity;
+                }
+                else {
+                    return [];
+                }
+            }
+            else if (node.quantifier == "any") {
                 console.log("- any/the");
-                return findEntityID(node.object, state);
+                var tmp = [];
+                for (var i = 0; i < entity.length; i++) {
+                    for (var j = 0; j < entity[i].length; j++) {
+                        var innerTmp = [];
+                        innerTmp.push(entity[i][j]);
+                        tmp.push(innerTmp);
+                    }
+                }
             }
             else if (node.quantifier == "all") {
                 console.log("- all");
-                return findEntityID(node.object, state);
+                return entity;
             }
         }
         if (node.location && node.object) {
             console.log("complex object");
             return [];
         }
-        return findObject(node, state);
+        var tmp = [];
+        tmp.push(findObject(node, state));
+        return tmp;
     }
     function getObjectFromID(id, state) {
         for (var key in state.objects) {

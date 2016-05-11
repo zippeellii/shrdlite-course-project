@@ -280,7 +280,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     // Will return an array of strings corresponding to the objects that
     // match a given entity, implemented recursively so takes in node as
     // type (could use a wrapper function lol)
-    function findEntityID(node : any, state : WorldState) : string[] {
+    function findEntityID(node : any, state : WorldState) : string[][] {
 
         // Is location
         if (node.entity && node.relation) {
@@ -290,194 +290,242 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             if (node.relation == "leftof") {
                 console.log("- leftof");
                 // Return all objects left of the entites
-                var distanceFromLeftAllowed = state.stacks.length-1;
-                for (let i = distanceFromLeftAllowed; i >= 0; i--) {
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            distanceFromLeftAllowed = i;
+                var tmp : string[][] = [];
+                for (let k = 0; k < entity.length; k++) {
+                    var innerTmp : string[] = [];
+                    var distanceFromLeftAllowed = state.stacks.length-1;
+                    for (let i = distanceFromLeftAllowed; i >= 0; i--) {
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                distanceFromLeftAllowed = i;
+                            }
                         }
                     }
-                }
-                var tmp : string[] = [];
-                for (let i = 0; i < distanceFromLeftAllowed; i++) {
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        tmp.push(state.stacks[i][j]);
+                    for (let i = 0; i < distanceFromLeftAllowed; i++) {
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            innerTmp.push(state.stacks[i][j]);
+                        }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             } else if (node.relation == "rightof") {
                 console.log("- rightof");
                 // Return all objects right of the entites
-                var distanceFromLeftAllowed = 0;
-                for (let i = 0; i < state.stacks.length; i++) {
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            distanceFromLeftAllowed = i;
+                var tmp : string[][] = [];
+                for (let k = 0; k < entity.length; k++) {
+                    var innerTmp : string[] = [];
+                    var distanceFromLeftAllowed = 0;
+                    for (let i = 0; i < state.stacks.length; i++) {
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                distanceFromLeftAllowed = i;
+                            }
                         }
                     }
-                }
-                var tmp : string[] = [];
-                for (let i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        tmp.push(state.stacks[i][j]);
+                    for (let i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            innerTmp.push(state.stacks[i][j]);
+                        }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             } else if (node.relation == "inside") {
                 console.log("- inside");
                 // Returns the objects that are inside all the entities
 
-                var tmp : string[] = [];
+                var tmp : string[][] = [];
 
-                // Check so that all entities are boxes
-                for (let i = 0; i < entity.length; i++) {
-                    for (var key in state.objects) {
-                        if (key == entity[i]) {
-                            if (state.objects[key].form != "box") {
-                                return tmp;
+                for (let k = 0; k < entity.length; k++) {
+                    var innerTmp : string[] = [];
+
+                    // Check so that all entities are boxes
+                    for (let i = 0; i < entity[k].length; i++) {
+                        for (var key in state.objects) {
+                            if (key == entity[k][i]) {
+                                if (state.objects[key].form != "box") {
+                                    return tmp;
+                                }
                             }
                         }
                     }
-                }
 
-                // TODO: Right now this only handles one box
-                for (let i = 0; i < state.stacks.length; i++) {
-                    var boxFound = "";
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        var object = state.stacks[i][j];
-                        if (boxFound != "") {
-                            // Check if item is eligble to fit in the box
-                            if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
-                                tmp.push(state.stacks[i][j]);
-                            }
-                            boxFound = "";
-                        } else {
-                            // Check if current object is in our entity, save it if it is
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                boxFound = state.stacks[i][j];
+                    // TODO: Right now this only handles one box
+                    for (let i = 0; i < state.stacks.length; i++) {
+                        var boxFound = "";
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            var object = state.stacks[i][j];
+                            if (boxFound != "") {
+                                // Check if item is eligble to fit in the box
+                                if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
+                                    innerTmp.push(state.stacks[i][j]);
+                                }
+                                boxFound = "";
+                            } else {
+                                // Check if current object is in our entity, save it if it is
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    boxFound = state.stacks[i][j];
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
+                return tmp;
             } else if (node.relation == "ontop") {
                 console.log("- ontop");
                 // Returns objects directly on top of entity (will not work for more than one entity)
-                var tmp : string[] = [];
-                if(entity.length != 1) {
-                    return tmp;
-                }
-                for (let i = 0; i < state.stacks.length; i++) {
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            if (state.stacks[i][j+1]) {
-                                tmp.push(state.stacks[i][j+1]);
+
+                var tmp : string[][] = [];
+
+                for (let k = 0; k < entity.length; k++) {
+                    var innerTmp : string[] = [];
+                    if(entity[k].length != 1) {
+                        continue;
+                    }
+                    for (let i = 0; i < state.stacks.length; i++) {
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                if (state.stacks[i][j+1]) {
+                                    innerTmp.push(state.stacks[i][j+1]);
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             } else if (node.realtion == "under") {
                 console.log("- under");
                 // Returns objects under (not just directly under) the entites
 
-                var tmp : string[] = [];
+                for (let k = 0; k < entity.length; k++) {
+                    var innerTmp : string[] = [];
 
-                // Checks so that all are in same stack and returns what is under
-                for (let i = 0; i < state.stacks.length; i++) {
-                    var count = 0;
-                    var nbrOfEntities = entity.length;
-                    for (let j = state.stacks[i].length-1; j >= 0; j--) {
-                        if (nbrOfEntities == count) {
-                            // All entities was in this stack, start pushing what objects remain above
-                            tmp.push(state.stacks[i][j]);
-                        } else {
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                count = count + 1;
+                    // Checks so that all are in same stack and returns what is under
+                    for (let i = 0; i < state.stacks.length; i++) {
+                        var count = 0;
+                        var nbrOfEntities = entity[k].length;
+                        for (let j = state.stacks[i].length-1; j >= 0; j--) {
+                            if (nbrOfEntities == count) {
+                                // All entities was in this stack, start pushing what objects remain above
+                                innerTmp.push(state.stacks[i][j]);
+                            } else {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    count = count + 1;
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             } else if (node.relation == "beside") {
                 console.log("- beside");
                 // Return all objects beside the entity
 
-                var tmp : string[] = [];
+                var tmp : string[][] = [];
 
-                var columnsWithEntities : number[] = [];
+                for (let k = 0; k < entity.length; k++) {
+                    var innerTmp : string[] = [];
 
-                // Finds columns which has entities inside them and
-                // fills columnsWithEntities accordingly
-                for (let i = 0; i < state.stacks.length; i++) {
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            columnsWithEntities.push(i);
-                            break;
-                        }
-                    }
-                }
+                    var columnsWithEntities : number[] = [];
 
-                // Adds the entities in the "allowed" rows
-                for (let i = 0; i < state.stacks.length; i++) {
-                    if (columnsWithEntities.indexOf(i) >= 0) {
+                    // Finds columns which has entities inside them and
+                    // fills columnsWithEntities accordingly
+                    for (let i = 0; i < state.stacks.length; i++) {
                         for (let j = 0; j < state.stacks[i].length; j++) {
-                            tmp.push(state.stacks[i][j]);
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                columnsWithEntities.push(i);
+                                break;
+                            }
                         }
                     }
-                }
 
+                    // Adds the entities in the "allowed" rows
+                    for (let i = 0; i < state.stacks.length; i++) {
+                        if (columnsWithEntities.indexOf(i) >= 0) {
+                            for (let j = 0; j < state.stacks[i].length; j++) {
+                                innerTmp.push(state.stacks[i][j]);
+                            }
+                        }
+                    }
+                    tmp.push(innerTmp);
+                }
                 return tmp;
             } else if (node.relation == "above") {
                 console.log("- above");
                 // Returns objects above (not just directly above) the entites
 
-                var tmp : string[] = [];
+                var tmp : string[][] = [];
 
-                // Checks so that all are in same stack and returns what is above
-                for (let i = 0; i < state.stacks.length; i++) {
-                    var count = 0;
-                    var nbrOfEntities = entity.length;
-                    for (let j = 0; j < state.stacks[i].length; j++) {
-                        if (nbrOfEntities == count) {
-                            // All entities was in this stack, start pushing what objects remain above
-                            tmp.push(state.stacks[i][j]);
-                        } else {
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                count = count + 1;
+                for (let k = 0; k < entity.length; k++) {
+                    var innerTmp : string[] = [];
+
+                    // Checks so that all are in same stack and returns what is above
+                    for (let i = 0; i < state.stacks.length; i++) {
+                        var count = 0;
+                        var nbrOfEntities = entity[k].length;
+                        for (let j = 0; j < state.stacks[i].length; j++) {
+                            if (nbrOfEntities == count) {
+                                // All entities was in this stack, start pushing what objects remain above
+                                innerTmp.push(state.stacks[i][j]);
+                            } else {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    count = count + 1;
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
-
                 return tmp;
             }
         }
 
         // Is entity
-        if (node.quantifier && node.object) {                                   // TODO: What should any / the return?
+        if (node.quantifier && node.object) {
             console.log("entity");
-            if (node.quantifier == "any" || node.quantifier == "the") {
+            var entity = findEntityID(node.object, state);
+            if (node.quantifier == "the") {
+                if (entity.length == 1 && entity[0].length == 1) {
+                    return entity;
+                } else {
+                    return [];
+                }
+            } else if (node.quantifier == "any") {
                 console.log("- any/the");
                 // Returns first value from collection
-                return findEntityID(node.object, state);
-                //var tmp : string[] = [];
-                //tmp.push(findEntityID(node.object, state)[0]);
-                //return tmp;
+
+                var tmp : string[][] = [];
+
+                for (let i = 0; i < entity.length; i++) {
+                    // For each outer list, split it up in ORs
+                    for (let j = 0; j < entity[i].length; j++) {
+                        var innerTmp : string[] = [];
+                        innerTmp.push(entity[i][j]);
+                        tmp.push(innerTmp);
+                    }
+                }
             } else if (node.quantifier == "all") {
                 console.log("- all");
                 // Returns whole collection
-                return findEntityID(node.object, state);
+                return entity;
+
             }
         }
 
-        // Is complex object
+        // Is complex object                                                                TODO fix listOfList (also implement)
         if (node.location && node.object) {
             console.log("complex object");
             return [];
         }
 
         // Is simple object
-        return findObject(node, state);
+        var tmp : string[][] = [];
+        tmp.push(findObject(node, state));
+        return tmp;
     }
 
     function getObjectFromID (id : string, state : WorldState) : ObjectDefinition {
