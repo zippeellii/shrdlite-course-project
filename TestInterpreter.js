@@ -159,7 +159,11 @@ var Interpreter;
             }
         }
         // console.log(cmd);
+<<<<<<< HEAD
         //console.log(state);
+=======
+        console.log(state);
+>>>>>>> af5fb1930abf7c2ddcc8fdf8291a961e90c8a930
         console.log("________");
         var entities = findEntityID(cmd.entity, state);
         console.log(entities);
@@ -167,7 +171,10 @@ var Interpreter;
         var interpretation;
         if (cmd.location) {
             var locationEntities = findEntityID(cmd.location.entity, state);
+<<<<<<< HEAD
             console.log("________");
+=======
+>>>>>>> af5fb1930abf7c2ddcc8fdf8291a961e90c8a930
             interpretation = [[
                     { polarity: true, relation: cmd.location.relation, args: [entities[0], locationEntities[0]] }
                 ]];
@@ -177,6 +184,20 @@ var Interpreter;
                     { polarity: true, relation: "holding", args: [entities[0]] }
                 ]];
         }
+<<<<<<< HEAD
+=======
+        // var command = cmd.command;
+        // var entityID = findEntityID(cmd.entity, state);
+        // if (entityID) {
+        //     console.log(entityID);
+        //     // Find which functions should be applied where
+        //     // Call some recursive functions
+        //     // Return the results
+        // } else {
+        //     console.log(entityID);
+        //     // Return some sort of error, not possible in this world state
+        // }
+>>>>>>> af5fb1930abf7c2ddcc8fdf8291a961e90c8a930
         return interpretation; // Remove
     }
     function findObject(object, state) {

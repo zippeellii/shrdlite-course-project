@@ -51,24 +51,87 @@ var Interpreter;
                 delete state.objects[obj];
             }
         }
+        console.log(cmd);
+        console.log(state);
         console.log("________");
-        var entities = findEntityID(cmd.entity, state);
-        console.log(entities);
+        var entities = findEntityID(cmd.entity.object, state);
+        console.log('Found number entities: ' + entities);
         console.log("________");
-        var interpretation;
+        var interpretation = [];
         if (cmd.location) {
+            console.log('Location found');
             var locationEntities = findEntityID(cmd.location.entity, state);
-            console.log("________");
-            interpretation = [[
-                    { polarity: true, relation: cmd.location.relation, args: [entities[0], locationEntities[0]] }
-                ]];
+            if (cmd.location.relation == 'inside') {
+                for (var i = 0; i < locationEntities.length; i++) {
+                    for (var j = 0; j < entities.length; j++) {
+                        if (checkBallInBox(state.objects[entities[j]], state.objects[locationEntities[i]])) {
+                            interpretation.push([{ polarity: true, relation: "inside", args: [entities[j], locationEntities[i]] }]);
+                        }
+                    }
+                }
+            }
+            if (cmd.location.relation == 'ontop') {
+                for (var i = 0; i < entities.length; i++) {
+                    for (var j = 0; j < locationEntities.length; j++) {
+                        if (state.objects[entities[i]].form != 'ball') {
+                            interpretation.push([{ polarity: true, relation: "ontop", args: [entities[i], locationEntities[j]] }]);
+                        }
+                    }
+                }
+            }
+            console.log('Location entities: ' + locationEntities);
         }
         else {
-            interpretation = [[
-                    { polarity: true, relation: "holding", args: [entities[0]] }
-                ]];
+            for (var i = 0; i < entities.length; i++) {
+                interpretation.push([{ polarity: true, relation: "holding", args: [entities[i]] }]);
+            }
+        }
+        console.log("Interpretations: " + interpretation);
+        if (interpretation.length == 0) {
+            return undefined;
         }
         return interpretation;
+    }
+    function checkOnTopOf(object1, object2, state) {
+        var objects = state.objects;
+        if (objects[object1].form == 'ball' && objects[object2].form != 'box') {
+            return false;
+        }
+        if (objects[object2].form == 'ball') {
+            return false;
+        }
+        if (objects[object1].size == 'large' && objects[object2].size == 'small') {
+            return false;
+        }
+        if (objects[object2].form == 'box') {
+            if (objects[object1].form == 'pyramid' || objects[object1].form == 'plank' || objects[object1].form == 'box') {
+                if (objects[object2].size == 'large' && objects[object2].size == 'large' || objects[object2].size == 'small') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    function checkAbove(object1, object2, state) {
+        return checkOnTopOf(object1, object2, state);
+    }
+    function checkUnder(object1, object2, state) {
+        return checkAbove(object2, object1, state);
+    }
+    function checkBeside(object1, object2, state) {
+        return true;
+    }
+    function checkLeftOf(object1, object2, state) {
+        return !(state.stacks[0].indexOf(object2) == -1);
+    }
+    function checkRightOf(object1, object2, state) {
+        return !(state.stacks[state.stacks.length].indexOf(object2));
+    }
+    function checkBallInBox(ball, box) {
+        if (ball.size == 'large' && box.size != 'large' || ball.size == 'small' && box.size == 'tiny' || ball.size == 'tiny' && box.size == 'tiny') {
+            return false;
+        }
+        return true;
     }
     function findObject(object, state) {
         var tmp = [];
@@ -157,7 +220,7 @@ var Interpreter;
                     for (var j = 0; j < state.stacks[i].length; j++) {
                         var object = state.stacks[i][j];
                         if (boxFound != "") {
-                            if (checkOnTopOf(state.stacks[i][j], boxFound)) {
+                            if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
                                 tmp.push(state.stacks[i][j]);
                             }
                             boxFound = "";
@@ -251,9 +314,7 @@ var Interpreter;
             console.log("entity");
             if (node.quantifier == "any" || node.quantifier == "the") {
                 console.log("- any/the");
-                var tmp = [];
-                tmp.push(findEntityID(node.object, state)[0]);
-                return tmp;
+                return findEntityID(node.object, state);
             }
             else if (node.quantifier == "all") {
                 console.log("- all");
