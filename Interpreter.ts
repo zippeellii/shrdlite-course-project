@@ -132,10 +132,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           }
         }
 
-        // console.log(cmd);
+        console.log(cmd);
         console.log(state);
         console.log("________");
-        var entities = findObject(cmd.entity.object, state);
+        var entities = findEntityID(cmd.entity.object, state);
         console.log('Found number entities: ' + entities);
         console.log("________");
         var interpretation : DNFFormula = [];
@@ -143,9 +143,25 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         if (cmd.location) {
           console.log('Location found');
           var locationEntities = findEntityID(cmd.location.entity, state);
-          interpretation = [[
-            {polarity: true, relation: cmd.location.relation, args: [entities[0], locationEntities[0]] }
-          ]];
+          if(cmd.location.relation == 'inside'){
+            for(var i = 0; i < locationEntities.length; i++){
+              for(var j = 0; j < entities.length; j++){
+                if(checkBallInBox(state.objects[entities[j]], state.objects[locationEntities[i]])){
+                  interpretation.push([{polarity: true, relation: "inside", args: [entities[j], locationEntities[i]]}]);
+                }
+              }
+            }
+          }
+          if(cmd.location.relation == 'ontop'){
+            for(var i = 0; i < entities.length; i++){
+              for(var j = 0; j < locationEntities.length; j++){
+                if(state.objects[entities[i]].form != 'ball'){
+                  interpretation.push([{polarity: true, relation: "ontop", args: [entities[i], locationEntities[j]]}]);
+                }
+              }
+            }
+          }
+          console.log('Location entities: ' + locationEntities);
         } else {
           for(var i = 0; i < entities.length; i++){
             interpretation.push([{polarity: true, relation: "holding", args: [entities[i]]}]);
@@ -163,8 +179,69 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         //     console.log(entityID);
         //     // Return some sort of error, not possible in this world state
         // }
-
+        console.log("Interpretations: " + interpretation);
+        if(interpretation.length == 0){
+          return undefined;
+        }
         return interpretation; // Remove
+    }
+    //Check that object1 can be on top of object 2
+    //TODO: Need to implement pyramid etc.
+    function checkOnTopOf(object1 : string, object2 : string, state : WorldState) : boolean{
+      var objects = state.objects;
+      //A ball cannot be on top of anything other than a box (inside) or the floor
+      //TODO: This should check the condition for floor aswell
+      if(objects[object1].form == 'ball' && objects[object2].form != 'box'){
+        return false;
+      }
+      //A ball cannot have anything ontop of itself
+      if(objects[object2].form == 'ball'){
+        return false;
+      }
+      //A small object cannot support a large object
+      if(objects[object1].size == 'large' && objects[object2].size == 'small'){
+        return false;
+      }
+      // A box cannot contain pyrmamids, planks or boxes of the same size
+      if(objects[object2].form == 'box'){
+        if(objects[object1].form == 'pyramid' || objects[object1].form == 'plank' || objects[object1].form == 'box'){
+          if(objects[object2].size == 'large' && objects[object2].size == 'large' || objects[object2].size == 'small'){
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    //Check that object1 can be above object2
+    function checkAbove(object1 : string, object2 : string, state : WorldState) : boolean{
+      //For now, above need same properties as onTopOf
+      return checkOnTopOf(object1, object2, state);
+    }
+    //Check that object1 can be under object2
+    function checkUnder(object1 : string, object2 : string, state : WorldState) : boolean{
+      //If one is under the other is above
+      return checkAbove(object2, object1, state);
+    }
+    //Check that object1 can be beside object2
+    function checkBeside(object1 : string, object2 : string, state : WorldState) : boolean{
+      return true;
+    }
+    //Check that object1 can be left of object2
+    function checkLeftOf(object1 : string, object2 : string, state : WorldState) : boolean{
+      //Return if object 2 is farmost to the left
+      return !(state.stacks[0].indexOf(object2) == -1);
+
+    }
+    //Check that object1 can be right of object2
+    function checkRightOf(object1 : string, object2 : string, state : WorldState) : boolean{
+      return !(state.stacks[state.stacks.length].indexOf(object2));
+    }
+
+    function checkBallInBox(ball : ObjectDefinition, box : ObjectDefinition) : boolean{
+      if(ball.size == 'large' && box.size != 'large' || ball.size == 'small' && box.size == 'tiny' || ball.size == 'tiny' && box.size == 'tiny'){
+        return false;
+      }
+      return true;
     }
 
     function findObject(object : Parser.Object, state : WorldState) : string[] {
@@ -173,11 +250,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
       if(object.object == undefined){
         //For all objects, find one matching
         for(var obj in state.objects){
-          console.log('Checking object: ' + obj);
           var other = state.objects[obj];
-          console.log(object);
           if(validForm(object, other.form) && validSize(object, other.size) && validColor(object, other.color)){
-            console.log('Adding object: ' + obj);
             tmp.push(obj);
           }
         }
@@ -385,9 +459,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             if (node.quantifier == "any" || node.quantifier == "the") {
                 console.log("- any/the");
                 // Returns first value from collection
-                var tmp : string[] = [];
-                tmp.push(findEntityID(node.object, state)[0]);
-                return tmp;
+                return findEntityID(node.object, state);
+                //var tmp : string[] = [];
+                //tmp.push(findEntityID(node.object, state)[0]);
+                //return tmp;
             } else if (node.quantifier == "all") {
                 console.log("- all");
                 // Returns whole collection
