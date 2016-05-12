@@ -46,7 +46,7 @@ function goodbye(e : any) {
 	e.cancelBubble = true;
 
     // This is displayed in the dialog:
-	e.returnValue = 'Are you certain?\nYou cannot undo this, you know.'; 
+	e.returnValue = 'Are you certain?\nYou cannot undo this, you know.';
 
 	// e.stopPropagation works in Firefox.
 	if (e.stopPropagation) {
