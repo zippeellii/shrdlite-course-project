@@ -106,6 +106,35 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
+        
+        switch (cmd.command) {
+            case "move":
+            case "take":
+            case "put":
+                let objectNames = interpretEntity(cmd.entity, state);
+                let location = interpretLocation(cmd.location, state);
+                console.log("Object names: " + objectNames.toString());
+                
+                console.log("Location: " + location);
+                
+                // var interpretation: DNFFormula = [[]];
+
+
+                break;
+                
+
+
+        }
+
+    // "leftof"
+    // "rightof"
+    // "inside"
+    // "ontop"
+    // "under"
+    // "beside"
+    // "above"
+
+
         // This returns a dummy interpretation involving two random objects in the world
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var a : string = objects[Math.floor(Math.random() * objects.length)];
@@ -116,6 +145,71 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         ]];
         return interpretation;
     }
+
+    function interpretEntity(entity : Parser.Entity, state : WorldState) {
+        return interpretObject(entity.object, state);
+    }
+
+    function interpretObject(object : Parser.Object, state : WorldState) : any {
+        if (!object.object) {
+            let possibleObjects : string[] = [];
+            for (let worldObjectName in state.objects) {
+                let worldObject = state.objects[worldObjectName];
+                if (checkSimilarity(object, worldObject)) {
+                        possibleObjects.push(worldObjectName);
+                }
+            }
+            return possibleObjects;
+        } else {
+            return interpretObject(object.object, state);
+        }
+
+    }
+
+    function checkSimilarity(parseObject : Parser.Object, worldObject : Parser.Object) : boolean {
+        let sameForm: boolean, sameColor: boolean, sameSize: boolean;
+
+        if (parseObject.form == 'anyform') {
+            sameForm = true;
+        } else {
+            sameForm = parseObject.form == worldObject.form;
+        }
+        if (parseObject.color) {
+            sameColor = parseObject.color == worldObject.color;
+        } else {
+            sameColor = true;
+        }
+        if (parseObject.size) {
+            sameSize = parseObject.size == worldObject.size;
+        } else {
+            sameSize = true; 
+        }
+
+        return sameForm && sameColor && sameSize;
+    }
+
+    function interpretLocation(location : Parser.Location, state : WorldState) {
+
+    }
+
+    function isLeftOf(shouldBeLeft : Parser.Object, shouldBeRight : Parser.Object) : boolean {
+        
+        if (true) {
+            return true;
+        }
+
+    }
+
+
+    function getCoordinates(object : Parser.Object, state : WorldState) {
+        // for (let stack in stacks) {
+        //     if (stack) {
+                
+        //     }
+        // }
+    }
+
+
 
 }
 
