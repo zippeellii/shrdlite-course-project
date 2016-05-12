@@ -163,14 +163,18 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         // Base case
         if (!object.object) {
             let possibleObjects : string[] = [];
+            let allStacks: string[] = Array.prototype.concat.apply([], state.stacks);
             for (let worldObjectName in state.objects) {
-                let worldObject = state.objects[worldObjectName];
-                if (checkSimilarity(object, worldObject)) {
-                        possibleObjects.push(worldObjectName);
+                if (allStacks.indexOf(worldObjectName) != -1) {
+                    let worldObject = state.objects[worldObjectName];
+                    if (checkSimilarity(object, worldObject)) {
+                            possibleObjects.push(worldObjectName);
+                    }
+                    
                 }
             }
             return possibleObjects;
-            
+
         } else {
             let possibleObjects : string[] = interpretObject(object.object, state);
             let location : Parser.Location = object.location;
