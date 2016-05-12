@@ -127,9 +127,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 console.log("Locations: " + possibleLocations.possibleObjects.toString());
                 
                 for (let name of objectNames) {
-                    let conjunction: Conjunction = [];
                     
                     for (let location of possibleLocations.possibleObjects) {
+                        let conjunction: Conjunction = [];
                         let literal : Literal = { polarity: true, relation: possibleLocations.relation, args: [name, location] };
                         conjunction.push(literal);
                         interpretation.push(conjunction);
@@ -198,14 +198,16 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         let objectCoord = getCoordinates(parsedObject, state);
         let relativeObjCoord = getCoordinates(relativeObject, state);
 
+
+        // console.log("objco: " + objectCoord + " relco: " + relativeObjCoord + " relation: " + relation);
         switch (relation) {
             case 'leftof':
-                if (objectCoord.x < relativeObjCoord) {
+                if (objectCoord.x < relativeObjCoord.x) {
                     return true;
                 }
                 break;
             case 'rightof':
-                if (objectCoord.x > relativeObjCoord) {
+                if (objectCoord.x > relativeObjCoord.x) {
                     return true;
                 }
                 break;
