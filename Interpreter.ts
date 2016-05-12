@@ -107,30 +107,35 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
         
-        let interpretation: DNFFormula = [[]];
+        let interpretation: DNFFormula = [];
+        
+        let objectNames = interpretEntity(cmd.entity, state);
+        console.log("Object names: " + objectNames.toString());
         
         switch (cmd.command) {
-            case "move":
             case "take":
+                for (let name of objectNames) {
+                    let conjunction: Conjunction = [];
+                    let literal: Literal = { polarity: true, relation: 'holding', args: [name] };
+                    conjunction.push(literal);
+                    interpretation.push(conjunction);
+                }
+                break;
+            case "move":
             case "put":
-                let objectNames = interpretEntity(cmd.entity, state);
-                let location = interpretLocation(cmd.location, state);
-                console.log("Object names: " + objectNames.toString());
-                
-                console.log("Location: " + location);
+                let possibleLocations = interpretLocation(cmd.location, state);
+                console.log("Locations: " + possibleLocations.possibleObjects.toString());
                 
                 for (let name of objectNames) {
-                    let literal : Literal = { polarity: true, relation: "ontop", args: [name, 'floor'] };
-                    let literals: Literal[] = [];
-                    literals.push(literal);
-                    interpretation.push(literals);
+                    let conjunction: Conjunction = [];
+                    
+                    for (let location of possibleLocations.possibleObjects) {
+                        let literal : Literal = { polarity: true, relation: possibleLocations.relation, args: [name, location] };
+                        conjunction.push(literal);
+                        interpretation.push(conjunction);
+                    }
                 }
-
-
                 break;
-                
-
-
         }
 
         // This returns a dummy interpretation involving two random objects in the world
@@ -167,8 +172,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             let location : Parser.Location = object.location;
             let checkedObjects: string[] = []; 
             for (let uncheckedObject of possibleObjects) {
-                for (let relativeObject of interpretLocation(location, state)) {
-                    if (isRelationValid(uncheckedObject, relativeObject, location.relation, state) { // Filter array instead?
+                let possibleLocations = interpretLocation(location, state);
+                for (let possibleRelativeObject of possibleLocations.possibleObjects) {
+                    if (isRelationValid(uncheckedObject, possibleRelativeObject, possibleLocations.relation, state)) { // Filter array instead?
+                        // console.log('valid relation');
                         checkedObjects.push(uncheckedObject);
                     }
                 }
@@ -180,10 +187,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
     }
 
-    function interpretLocation(location: Parser.Location, state: WorldState): string[] {
-        // let relation: string = location.relation;
+    function interpretLocation(location: Parser.Location, state: WorldState): any {
+        let relation: string = location.relation;
         let possibleObjects: string[] = interpretEntity(location.entity, state);
-        return possibleObjects;
+        let locations = { relation: relation, possibleObjects: possibleObjects };
+        return locations;
     }
 
     function isRelationValid(parsedObject: string, relativeObject : string, relation : string, state: WorldState): boolean {
@@ -303,8 +311,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         return sameForm && sameColor && sameSize;
     }
-
-    
 
     function getCoordinates(objectName : string, state : WorldState) : any {
         for (let x=0; x < state.stacks.length; x++) {
