@@ -59,41 +59,78 @@ var Interpreter;
         console.log("________");
         var interpretation = [];
         if (cmd.location) {
-            console.log('Location found');
             var locationEntities = findEntityID(cmd.location.entity, state);
-            if (cmd.location.relation == 'inside') {
-                for (var i = 0; i < locationEntities.length; i++) {
-                    for (var j = 0; j < entities.length; j++) {
-                        if (checkBallInBox(state.objects[entities[j]], state.objects[locationEntities[i]])) {
-                            interpretation.push([{ polarity: true, relation: "inside", args: [entities[j], locationEntities[i]] }]);
-                        }
-                    }
-                }
-            }
-            if (cmd.location.relation == 'ontop') {
-                for (var i = 0; i < entities.length; i++) {
-                    for (var j = 0; j < locationEntities.length; j++) {
-                        if (state.objects[entities[i]].form != 'ball') {
-                            interpretation.push([{ polarity: true, relation: "ontop", args: [entities[i], locationEntities[j]] }]);
-                        }
-                    }
-                }
-            }
             console.log('Location entities: ' + locationEntities);
+            for (var i = 0; i < locationEntities.length; i++) {
+                for (var j = 0; j < locationEntities[i].length; j++) {
+                    for (var k = 0; k < entities.length; k++) {
+                        for (var l = 0; l < entities[k].length; l++) {
+                            if (cmd.location.relation == 'inside') {
+                                if (checkOnTopOf(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "inside", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'above') {
+                                if (checkAbove(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "above", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'leftof') {
+                                if (checkLeftOf(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "leftof", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'beside') {
+                                if (checkBeside(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "beside", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'ontop') {
+                                if (checkOnTopOf(entities[k][l], locationEntities[i][j], state)) {
+                                    console.log('In ontop, taking location entity: ' + locationEntities[i][j]);
+                                    console.log('In ontop, taking entity: ' + entities[k][l]);
+                                    interpretation.push([{ polarity: true, relation: "ontop", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         else {
-            for (var i = 0; i < entities.length; i++) {
-                interpretation.push([{ polarity: true, relation: "holding", args: [entities[i]] }]);
+            if (cmd.entity.quantifier == 'any') {
+                for (var i = 0; i < entities.length; i++) {
+                    for (var j = 0; j < entities[i].length; j++) {
+                        interpretation.push([{ polarity: true, relation: "holding", args: [entities[i][j]] }]);
+                    }
+                }
+            }
+            else {
+                for (var i = 0; i < entities.length; i++) {
+                    var conjCommands = [];
+                    for (var j = 0; j < entities[i].length; j++) {
+                        console.log('Value of j: ' + j);
+                        conjCommands.push({ polarity: true, relation: "holding", args: [entities[i][j]] });
+                    }
+                    interpretation.push(conjCommands);
+                }
             }
         }
-        console.log("Interpretations: " + interpretation);
+        console.log('Stringify literal' + stringifyLiteral(interpretation[0][0]));
         if (interpretation.length == 0) {
             return undefined;
         }
         return interpretation;
     }
     function checkOnTopOf(object1, object2, state) {
+        console.log(object1 + " " + object2);
+        if (object2 == undefined || object1 == undefined) {
+            return false;
+        }
         var objects = state.objects;
+        if (object2 == 'floor') {
+            return true;
+        }
         if (objects[object1].form == 'ball' && objects[object2].form != 'box') {
             return false;
         }
@@ -113,6 +150,11 @@ var Interpreter;
         return true;
     }
     function checkAbove(object1, object2, state) {
+        for (var i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object2) != -1) {
+                return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length - 1], state);
+            }
+        }
         return checkOnTopOf(object1, object2, state);
     }
     function checkUnder(object1, object2, state) {
@@ -122,7 +164,7 @@ var Interpreter;
         return true;
     }
     function checkLeftOf(object1, object2, state) {
-        return !(state.stacks[0].indexOf(object2) == -1);
+        return object1 != object2;
     }
     function checkRightOf(object1, object2, state) {
         return !(state.stacks[state.stacks.length].indexOf(object2));
@@ -135,6 +177,9 @@ var Interpreter;
     }
     function findObject(object, state) {
         var tmp = [];
+        if (object.form == 'floor') {
+            tmp.push('floor');
+        }
         if (object.object == undefined) {
             for (var obj in state.objects) {
                 var other = state.objects[obj];
@@ -255,10 +300,17 @@ var Interpreter;
                         continue;
                     }
                     for (var i = 0; i < state.stacks.length; i++) {
-                        for (var j = 0; j < state.stacks[i].length; j++) {
-                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
-                                if (state.stacks[i][j + 1]) {
-                                    innerTmp.push(state.stacks[i][j + 1]);
+                        if (entity[0][0] == 'floor') {
+                            if (state.stacks[i][0]) {
+                                innerTmp.push(state.stacks[i][0]);
+                            }
+                        }
+                        else {
+                            for (var j = 0; j < state.stacks[i].length; j++) {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    if (state.stacks[i][j + 1]) {
+                                        innerTmp.push(state.stacks[i][j + 1]);
+                                    }
                                 }
                             }
                         }
@@ -291,6 +343,7 @@ var Interpreter;
             }
             else if (node.relation == "beside") {
                 console.log("- beside");
+                console.log('This is what we get to beside: ' + entity);
                 var tmp = [];
                 for (var k = 0; k < entity.length; k++) {
                     var innerTmp = [];
@@ -305,8 +358,15 @@ var Interpreter;
                     }
                     for (var i = 0; i < state.stacks.length; i++) {
                         if (columnsWithEntities.indexOf(i) >= 0) {
-                            for (var j = 0; j < state.stacks[i].length; j++) {
-                                innerTmp.push(state.stacks[i][j]);
+                            if (i > 0) {
+                                for (var j = 0; j < state.stacks[i - 1].length; j++) {
+                                    innerTmp.push(state.stacks[i - 1][j]);
+                                }
+                            }
+                            if (i < state.stacks.length - 2) {
+                                for (var j = 0; j < state.stacks[i + 1].length; j++) {
+                                    innerTmp.push(state.stacks[i + 1][j]);
+                                }
                             }
                         }
                     }
@@ -359,6 +419,7 @@ var Interpreter;
                         tmp.push(innerTmp);
                     }
                 }
+                return tmp;
             }
             else if (node.quantifier == "all") {
                 console.log("- all");
@@ -366,8 +427,20 @@ var Interpreter;
             }
         }
         if (node.location && node.object) {
+            var objects = findEntityID(node.object, state);
+            var concatObjects = Array.prototype.concat.apply([], objects);
+            var location = findEntityID(node.location, state);
+            console.log('Concated objects: ' + concatObjects);
+            console.log('Location objects: ' + location);
+            for (var i = 0; i < location.length; i++) {
+                for (var j = 0; j < location[i].length; j++) {
+                    if (concatObjects.indexOf(location[i][j]) == -1) {
+                        delete location[i][j];
+                    }
+                }
+            }
             console.log("complex object");
-            return [];
+            return location;
         }
         var tmp = [];
         tmp.push(findObject(node, state));

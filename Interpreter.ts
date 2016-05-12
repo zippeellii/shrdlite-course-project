@@ -149,7 +149,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 for(var l = 0; l < entities[k].length; l++){
                   if(cmd.location.relation =='inside'){
                     if(checkOnTopOf(entities[k][l],locationEntities[i][j], state)){
-                      console.log('THIS IS SO OKAY');
                       interpretation.push([{polarity: true, relation: "inside", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
@@ -208,6 +207,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     //Check that object1 can be on top of object 2
     //TODO: Need to implement pyramid etc.
     function checkOnTopOf(object1 : string, object2 : string, state : WorldState) : boolean{
+      console.log(object1 + " " + object2);
+      if (object2 == undefined || object1 == undefined) {
+          return false;
+      }
       var objects = state.objects;
       if(object2 == 'floor'){
         return true;

@@ -166,45 +166,64 @@ var Interpreter;
         console.log("________");
         var interpretation = [];
         if (cmd.location) {
-            console.log('Location found');
             var locationEntities = findEntityID(cmd.location.entity, state);
-            if (cmd.location.relation == 'inside') {
-                for (var i = 0; i < locationEntities.length; i++) {
-                    for (var j = 0; j < entities.length; j++) {
-                        if (checkBallInBox(state.objects[entities[j]], state.objects[locationEntities[i]])) {
-                            interpretation.push([{ polarity: true, relation: "inside", args: [entities[j], locationEntities[i]] }]);
-                        }
-                    }
-                }
-            }
-            if (cmd.location.relation == 'ontop') {
-                for (var i = 0; i < entities.length; i++) {
-                    for (var j = 0; j < locationEntities.length; j++) {
-                        if (state.objects[entities[i]].form != 'ball') {
-                            interpretation.push([{ polarity: true, relation: "ontop", args: [entities[i], locationEntities[j]] }]);
-                        }
-                    }
-                }
-            }
             console.log('Location entities: ' + locationEntities);
+            for (var i = 0; i < locationEntities.length; i++) {
+                for (var j = 0; j < locationEntities[i].length; j++) {
+                    for (var k = 0; k < entities.length; k++) {
+                        for (var l = 0; l < entities[k].length; l++) {
+                            if (cmd.location.relation == 'inside') {
+                                if (checkOnTopOf(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "inside", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'above') {
+                                if (checkAbove(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "above", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'leftof') {
+                                if (checkLeftOf(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "leftof", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'beside') {
+                                if (checkBeside(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "beside", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'ontop') {
+                                if (checkOnTopOf(entities[k][l], locationEntities[i][j], state)) {
+                                    console.log('In ontop, taking location entity: ' + locationEntities[i][j]);
+                                    console.log('In ontop, taking entity: ' + entities[k][l]);
+                                    interpretation.push([{ polarity: true, relation: "ontop", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         else {
-            for (var i = 0; i < entities.length; i++) {
-                interpretation.push([{ polarity: true, relation: "holding", args: [entities[i]] }]);
+            if (cmd.entity.quantifier == 'any') {
+                for (var i = 0; i < entities.length; i++) {
+                    for (var j = 0; j < entities[i].length; j++) {
+                        interpretation.push([{ polarity: true, relation: "holding", args: [entities[i][j]] }]);
+                    }
+                }
+            }
+            else {
+                for (var i = 0; i < entities.length; i++) {
+                    var conjCommands = [];
+                    for (var j = 0; j < entities[i].length; j++) {
+                        console.log('Value of j: ' + j);
+                        conjCommands.push({ polarity: true, relation: "holding", args: [entities[i][j]] });
+                    }
+                    interpretation.push(conjCommands);
+                }
             }
         }
-        // var command = cmd.command;
-        // var entityID = findEntityID(cmd.entity, state);
-        // if (entityID) {
-        //     console.log(entityID);
-        //     // Find which functions should be applied where
-        //     // Call some recursive functions
-        //     // Return the results
-        // } else {
-        //     console.log(entityID);
-        //     // Return some sort of error, not possible in this world state
-        // }
-        console.log("Interpretations: " + interpretation);
+        console.log('Stringify literal' + stringifyLiteral(interpretation[0][0]));
         if (interpretation.length == 0) {
             return undefined;
         }
@@ -213,7 +232,14 @@ var Interpreter;
     //Check that object1 can be on top of object 2
     //TODO: Need to implement pyramid etc.
     function checkOnTopOf(object1, object2, state) {
+        console.log(object1 + " " + object2);
+        if (object2 == undefined || object1 == undefined) {
+            return false;
+        }
         var objects = state.objects;
+        if (object2 == 'floor') {
+            return true;
+        }
         //A ball cannot be on top of anything other than a box (inside) or the floor
         //TODO: This should check the condition for floor aswell
         if (objects[object1].form == 'ball' && objects[object2].form != 'box') {
@@ -239,6 +265,11 @@ var Interpreter;
     }
     //Check that object1 can be above object2
     function checkAbove(object1, object2, state) {
+        for (var i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object2) != -1) {
+                return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length - 1], state);
+            }
+        }
         //For now, above need same properties as onTopOf
         return checkOnTopOf(object1, object2, state);
     }
@@ -253,8 +284,7 @@ var Interpreter;
     }
     //Check that object1 can be left of object2
     function checkLeftOf(object1, object2, state) {
-        //Return if object 2 is farmost to the left
-        return !(state.stacks[0].indexOf(object2) == -1);
+        return object1 != object2;
     }
     //Check that object1 can be right of object2
     function checkRightOf(object1, object2, state) {
@@ -269,6 +299,9 @@ var Interpreter;
     function findObject(object, state) {
         //No more recursive objects
         var tmp = [];
+        if (object.form == 'floor') {
+            tmp.push('floor');
+        }
         if (object.object == undefined) {
             //For all objects, find one matching
             for (var obj in state.objects) {
@@ -309,38 +342,46 @@ var Interpreter;
             if (node.relation == "leftof") {
                 console.log("- leftof");
                 // Return all objects left of the entites
-                var distanceFromLeftAllowed = state.stacks.length - 1;
-                for (var i = distanceFromLeftAllowed; i >= 0; i--) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            distanceFromLeftAllowed = i;
+                var tmp = [];
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    var distanceFromLeftAllowed = state.stacks.length - 1;
+                    for (var i = distanceFromLeftAllowed; i >= 0; i--) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                distanceFromLeftAllowed = i;
+                            }
                         }
                     }
-                }
-                var tmp = [];
-                for (var i = 0; i < distanceFromLeftAllowed; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        tmp.push(state.stacks[i][j]);
+                    for (var i = 0; i < distanceFromLeftAllowed; i++) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            innerTmp.push(state.stacks[i][j]);
+                        }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.relation == "rightof") {
                 console.log("- rightof");
                 // Return all objects right of the entites
-                var distanceFromLeftAllowed = 0;
-                for (var i = 0; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            distanceFromLeftAllowed = i;
+                var tmp = [];
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    var distanceFromLeftAllowed = 0;
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                distanceFromLeftAllowed = i;
+                            }
                         }
                     }
-                }
-                var tmp = [];
-                for (var i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        tmp.push(state.stacks[i][j]);
+                    for (var i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            innerTmp.push(state.stacks[i][j]);
+                        }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
@@ -348,99 +389,130 @@ var Interpreter;
                 console.log("- inside");
                 // Returns the objects that are inside all the entities
                 var tmp = [];
-                // Check so that all entities are boxes
-                for (var i = 0; i < entity.length; i++) {
-                    for (var key in state.objects) {
-                        if (key == entity[i]) {
-                            if (state.objects[key].form != "box") {
-                                return tmp;
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    // Check so that all entities are boxes
+                    for (var i = 0; i < entity[k].length; i++) {
+                        for (var key in state.objects) {
+                            if (key == entity[k][i]) {
+                                if (state.objects[key].form != "box") {
+                                    return tmp;
+                                }
                             }
                         }
                     }
-                }
-                // TODO: Right now this only handles one box
-                for (var i = 0; i < state.stacks.length; i++) {
-                    var boxFound = "";
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        var object = state.stacks[i][j];
-                        if (boxFound != "") {
-                            // Check if item is eligble to fit in the box
-                            if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
-                                tmp.push(state.stacks[i][j]);
+                    // TODO: Right now this only handles one box
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        var boxFound = "";
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            var object = state.stacks[i][j];
+                            if (boxFound != "") {
+                                // Check if item is eligble to fit in the box
+                                if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
+                                    innerTmp.push(state.stacks[i][j]);
+                                }
+                                boxFound = "";
                             }
-                            boxFound = "";
-                        }
-                        else {
-                            // Check if current object is in our entity, save it if it is
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                boxFound = state.stacks[i][j];
+                            else {
+                                // Check if current object is in our entity, save it if it is
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    boxFound = state.stacks[i][j];
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
+                return tmp;
             }
             else if (node.relation == "ontop") {
                 console.log("- ontop");
                 // Returns objects directly on top of entity (will not work for more than one entity)
                 var tmp = [];
-                if (entity.length != 1) {
-                    return tmp;
-                }
-                for (var i = 0; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            if (state.stacks[i][j + 1]) {
-                                tmp.push(state.stacks[i][j + 1]);
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    if (entity[k].length != 1) {
+                        continue;
+                    }
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        if (entity[0][0] == 'floor') {
+                            if (state.stacks[i][0]) {
+                                innerTmp.push(state.stacks[i][0]);
+                            }
+                        }
+                        else {
+                            for (var j = 0; j < state.stacks[i].length; j++) {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    if (state.stacks[i][j + 1]) {
+                                        innerTmp.push(state.stacks[i][j + 1]);
+                                    }
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.realtion == "under") {
                 console.log("- under");
                 // Returns objects under (not just directly under) the entites
-                var tmp = [];
-                // Checks so that all are in same stack and returns what is under
-                for (var i = 0; i < state.stacks.length; i++) {
-                    var count = 0;
-                    var nbrOfEntities = entity.length;
-                    for (var j = state.stacks[i].length - 1; j >= 0; j--) {
-                        if (nbrOfEntities == count) {
-                            // All entities was in this stack, start pushing what objects remain above
-                            tmp.push(state.stacks[i][j]);
-                        }
-                        else {
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                count = count + 1;
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    // Checks so that all are in same stack and returns what is under
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        var count = 0;
+                        var nbrOfEntities = entity[k].length;
+                        for (var j = state.stacks[i].length - 1; j >= 0; j--) {
+                            if (nbrOfEntities == count) {
+                                // All entities was in this stack, start pushing what objects remain above
+                                innerTmp.push(state.stacks[i][j]);
+                            }
+                            else {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    count = count + 1;
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
             else if (node.relation == "beside") {
                 console.log("- beside");
+                console.log('This is what we get to beside: ' + entity);
                 // Return all objects beside the entity
                 var tmp = [];
-                var columnsWithEntities = [];
-                // Finds columns which has entities inside them and
-                // fills columnsWithEntities accordingly
-                for (var i = 0; i < state.stacks.length; i++) {
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (entity.indexOf(state.stacks[i][j]) > -1) {
-                            columnsWithEntities.push(i);
-                            break;
-                        }
-                    }
-                }
-                // Adds the entities in the "allowed" rows
-                for (var i = 0; i < state.stacks.length; i++) {
-                    if (columnsWithEntities.indexOf(i) >= 0) {
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    var columnsWithEntities = [];
+                    // Finds columns which has entities inside them and
+                    // fills columnsWithEntities accordingly
+                    for (var i = 0; i < state.stacks.length; i++) {
                         for (var j = 0; j < state.stacks[i].length; j++) {
-                            tmp.push(state.stacks[i][j]);
+                            if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                columnsWithEntities.push(i);
+                                break;
+                            }
                         }
                     }
+                    // Adds the entities in the "allowed" rows
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        if (columnsWithEntities.indexOf(i) >= 0) {
+                            if (i > 0) {
+                                for (var j = 0; j < state.stacks[i - 1].length; j++) {
+                                    innerTmp.push(state.stacks[i - 1][j]);
+                                }
+                            }
+                            if (i < state.stacks.length - 2) {
+                                for (var j = 0; j < state.stacks[i + 1].length; j++) {
+                                    innerTmp.push(state.stacks[i + 1][j]);
+                                }
+                            }
+                        }
+                    }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
@@ -448,21 +520,25 @@ var Interpreter;
                 console.log("- above");
                 // Returns objects above (not just directly above) the entites
                 var tmp = [];
-                // Checks so that all are in same stack and returns what is above
-                for (var i = 0; i < state.stacks.length; i++) {
-                    var count = 0;
-                    var nbrOfEntities = entity.length;
-                    for (var j = 0; j < state.stacks[i].length; j++) {
-                        if (nbrOfEntities == count) {
-                            // All entities was in this stack, start pushing what objects remain above
-                            tmp.push(state.stacks[i][j]);
-                        }
-                        else {
-                            if (entity.indexOf(state.stacks[i][j]) > -1) {
-                                count = count + 1;
+                for (var k = 0; k < entity.length; k++) {
+                    var innerTmp = [];
+                    // Checks so that all are in same stack and returns what is above
+                    for (var i = 0; i < state.stacks.length; i++) {
+                        var count = 0;
+                        var nbrOfEntities = entity[k].length;
+                        for (var j = 0; j < state.stacks[i].length; j++) {
+                            if (nbrOfEntities == count) {
+                                // All entities was in this stack, start pushing what objects remain above
+                                innerTmp.push(state.stacks[i][j]);
+                            }
+                            else {
+                                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                                    count = count + 1;
+                                }
                             }
                         }
                     }
+                    tmp.push(innerTmp);
                 }
                 return tmp;
             }
@@ -470,24 +546,56 @@ var Interpreter;
         // Is entity
         if (node.quantifier && node.object) {
             console.log("entity");
-            if (node.quantifier == "any" || node.quantifier == "the") {
+            var entity = findEntityID(node.object, state);
+            if (node.quantifier == "the") {
+                if (entity.length == 1 && entity[0].length == 1) {
+                    return entity;
+                }
+                else {
+                    return [];
+                }
+            }
+            else if (node.quantifier == "any") {
                 console.log("- any/the");
                 // Returns first value from collection
-                return findEntityID(node.object, state);
+                var tmp = [];
+                for (var i = 0; i < entity.length; i++) {
+                    // For each outer list, split it up in ORs
+                    for (var j = 0; j < entity[i].length; j++) {
+                        var innerTmp = [];
+                        innerTmp.push(entity[i][j]);
+                        tmp.push(innerTmp);
+                    }
+                }
+                return tmp;
             }
             else if (node.quantifier == "all") {
                 console.log("- all");
                 // Returns whole collection
-                return findEntityID(node.object, state);
+                return entity;
             }
         }
-        // Is complex object
+        // Is complex object                                                                TODO fix listOfList (also implement)
         if (node.location && node.object) {
+            var objects = findEntityID(node.object, state);
+            var concatObjects = Array.prototype.concat.apply([], objects);
+            var location = findEntityID(node.location, state);
+            console.log('Concated objects: ' + concatObjects);
+            console.log('Location objects: ' + location);
+            for (var i = 0; i < location.length; i++) {
+                for (var j = 0; j < location[i].length; j++) {
+                    if (concatObjects.indexOf(location[i][j]) == -1) {
+                        delete location[i][j];
+                    }
+                }
+            }
             console.log("complex object");
-            return [];
+            return location;
         }
         // Is simple object
-        return findObject(node, state);
+        var tmp = [];
+        tmp.push(findObject(node, state));
+        return tmp;
     }
     function getObjectFromID(id, state) {
         for (var key in state.objects) {
