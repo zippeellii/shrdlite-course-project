@@ -141,44 +141,57 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var interpretation : DNFFormula = [];
 
         if (cmd.location) {
-          console.log('Location found');
           var locationEntities = findEntityID(cmd.location.entity, state);
-          if(cmd.location.relation == 'inside'){
-            for(var i = 0; i < locationEntities.length; i++){
-              for(var j = 0; j < entities.length; j++){
-                if(checkBallInBox(state.objects[entities[j]], state.objects[locationEntities[i]])){
-                  interpretation.push([{polarity: true, relation: "inside", args: [entities[j], locationEntities[i]]}]);
-                }
-              }
-            }
-          }
-          if(cmd.location.relation == 'ontop'){
-            for(var i = 0; i < entities.length; i++){
-              for(var j = 0; j < locationEntities.length; j++){
-                if(state.objects[entities[i]].form != 'ball'){
-                  interpretation.push([{polarity: true, relation: "ontop", args: [entities[i], locationEntities[j]]}]);
-                }
-              }
-            }
-          }
           console.log('Location entities: ' + locationEntities);
-        } else {
-          for(var i = 0; i < entities.length; i++){
-            interpretation.push([{polarity: true, relation: "holding", args: [entities[i]]}]);
+          for(var i = 0; i < locationEntities.length; i++){
+            for(var j = 0; j < locationEntities[i].length; j++){
+              for(var k = 0; k < entities.length; k++){
+                for(var l = 0; l < entities[k].length; l++){
+                  if(cmd.location.relation =='inside'){
+                    if(checkOnTopOf(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "inside", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
+                  if(cmd.location.relation == 'above'){
+                    if(checkAbove(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "above", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
+                  if(cmd.location.relation == 'leftof'){
+                    if(checkLeftOf(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "leftof", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
+                  if(cmd.location.relation == 'beside'){
+                    if(checkBeside(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "beside", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        else{
+          if(cmd.entity.quantifier == 'any'){
+            for(var i = 0; i < entities.length; i++){
+              for(var j = 0; j < entities[i].length; j++){
+                interpretation.push([{polarity: true, relation: "holding", args: [entities[i][j]]}]);
+              }
+            }
+          }
+          else{
+            for(var i = 0; i < entities.length; i++){
+              var conjCommands : Literal[] = [];
+              for(var j = 0; j < entities[i].length; j++){
+                console.log('Value of j: ' + j);
+                conjCommands.push({polarity: true, relation: "holding", args: [entities[i][j]]});
+              }
+              interpretation.push(conjCommands);
+            }
           }
         }
 
-        // var command = cmd.command;
-        // var entityID = findEntityID(cmd.entity, state);
-        // if (entityID) {
-        //     console.log(entityID);
-        //     // Find which functions should be applied where
-        //     // Call some recursive functions
-        //     // Return the results
-        // } else {
-        //     console.log(entityID);
-        //     // Return some sort of error, not possible in this world state
-        // }
         console.log("Interpretations: " + interpretation);
         if(interpretation.length == 0){
           return undefined;
@@ -214,6 +227,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     }
     //Check that object1 can be above object2
     function checkAbove(object1 : string, object2 : string, state : WorldState) : boolean{
+      for(let i = 0; i < state.stacks.length; i++){
+        if(state.stacks[i].indexOf(object2) != -1){
+          return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length-1], state);
+        }
+      }
       //For now, above need same properties as onTopOf
       return checkOnTopOf(object1, object2, state);
     }
@@ -228,8 +246,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     }
     //Check that object1 can be left of object2
     function checkLeftOf(object1 : string, object2 : string, state : WorldState) : boolean{
-      //Return if object 2 is farmost to the left
-      return !(state.stacks[0].indexOf(object2) == -1);
+      return object1!=object2;
 
     }
     //Check that object1 can be right of object2
@@ -423,6 +440,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 return tmp;
             } else if (node.relation == "beside") {
                 console.log("- beside");
+                console.log('This is what we get to beside: ' + entity);
                 // Return all objects beside the entity
 
                 var tmp : string[][] = [];
@@ -445,11 +463,18 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
                     // Adds the entities in the "allowed" rows
                     for (let i = 0; i < state.stacks.length; i++) {
-                        if (columnsWithEntities.indexOf(i) >= 0) {
-                            for (let j = 0; j < state.stacks[i].length; j++) {
-                                innerTmp.push(state.stacks[i][j]);
-                            }
+                      if (columnsWithEntities.indexOf(i) >= 0) {
+                        if (i > 0) {
+                          for (let j = 0; j < state.stacks[i-1].length; j++) {
+                              innerTmp.push(state.stacks[i-1][j]);
+                          }
                         }
+                        if (i < state.stacks.length-2) {
+                          for (let j = 0; j < state.stacks[i+1].length; j++) {
+                              innerTmp.push(state.stacks[i+1][j]);
+                          }
+                        }
+                      }
                     }
                     tmp.push(innerTmp);
                 }
@@ -508,6 +533,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                         tmp.push(innerTmp);
                     }
                 }
+                return tmp;
             } else if (node.quantifier == "all") {
                 console.log("- all");
                 // Returns whole collection
@@ -518,8 +544,20 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         // Is complex object                                                                TODO fix listOfList (also implement)
         if (node.location && node.object) {
+          var objects = findEntityID(node.object, state);
+          var concatObjects : string[] = Array.prototype.concat.apply([], objects);
+          var location = findEntityID(node.location, state);
+          console.log('Concated objects: ' + concatObjects);
+          console.log('Location objects: ' + location);
+          for(let i = 0; i < location.length; i++){
+            for(let j = 0; j < location[i].length; j++){
+              if(concatObjects.indexOf(location[i][j]) == -1){
+                delete location[i][j];
+              }
+            }
+          }
             console.log("complex object");
-            return [];
+            return location;
         }
 
         // Is simple object
