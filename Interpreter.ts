@@ -109,7 +109,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         
         let interpretation: DNFFormula = [];
         
-        // console.log(cmd);
+        console.log(cmd);
 
         let objectNames = interpretEntity(cmd.entity, state);
         console.log("Object names: " + objectNames.toString());
@@ -126,17 +126,17 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
                 break;
             case "move":
-            case "put":
                 let possibleLocations = interpretLocation(cmd.location, state);
                 console.log("Locations: " + possibleLocations.possibleObjects.toString());
                 
                 for (let name of objectNames) {
-                    
                     for (let location of possibleLocations.possibleObjects) {
-                        let conjunction: Conjunction = [];
-                        let literal : Literal = { polarity: true, relation: possibleLocations.relation, args: [name, location] };
-                        conjunction.push(literal);
-                        interpretation.push(conjunction);
+                        if (name != location) {
+                            let conjunction: Conjunction = [];
+                            let literal : Literal = { polarity: true, relation: possibleLocations.relation, args: [name, location] };
+                            conjunction.push(literal);
+                            interpretation.push(conjunction);
+                        }
                     }
                 }
                 break;
@@ -202,8 +202,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         let objectCoord = getCoordinates(parsedObject, state);
         let relativeObjCoord = getCoordinates(relativeObject, state);
 
-
-        // console.log("objco: " + objectCoord + " relco: " + relativeObjCoord + " relation: " + relation);
+        // console.log("objco: " + parsedObject + " " + objectCoord.x + " relco: " + relativeObject + " " + relativeObjCoord.x + " relation: " + relation);
         switch (relation) {
             case 'leftof':
                 if (objectCoord.x < relativeObjCoord.x) {
