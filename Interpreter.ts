@@ -145,7 +145,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     }
 
     function interpretEntity(entity : Parser.Entity, state : WorldState) : string[] {
-        let quantifier: string = entity.quantifier;
+        // let quantifier: string = entity.quantifier;
         let possibleObjects : string[] = interpretObject(entity.object, state);
         return possibleObjects;
     }
@@ -167,8 +167,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             let location : Parser.Location = object.location;
             let checkedObjects: string[] = []; 
             for (let uncheckedObject of possibleObjects) {
-                if (isObjectInLocation(uncheckedObject, location, state)) { // Filter array instead?
-                    checkedObjects.push(uncheckedObject);
+                for (let relativeObject of interpretLocation(location, state)) {
+                    if (isRelationValid(uncheckedObject, relativeObject, location.relation, state) { // Filter array instead?
+                        checkedObjects.push(uncheckedObject);
+                    }
                 }
             }
             return checkedObjects;
@@ -178,56 +180,107 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
     }
 
-    function isObjectInLocation(objectName: string, location: Parser.Location, state: WorldState): boolean {
-        let relation: string = location.relation;
-        let possibleRelationObjects: string[] = interpretEntity(location.entity, state);
-        
-        let objectCoord = getCoordinates(objectName, state);
+    function interpretLocation(location: Parser.Location, state: WorldState): string[] {
+        // let relation: string = location.relation;
+        let possibleObjects: string[] = interpretEntity(location.entity, state);
+        return possibleObjects;
+    }
 
-        for (let relationObject of possibleRelationObjects) {
-            let relativeObjCoord = getCoordinates(relationObject, state);
-            
-            switch (relation) {
-                case 'leftof': 
-                    if (objectCoord.x < relativeObjCoord) {
-                        return true; // Should it really return true as soon as there is something that fits?
-                    }
-                    break;
-                case 'rightof':
-                    if (objectCoord.x > relativeObjCoord) {
-                        return true; // Should it really return true as soon as there is something that fits?
-                    }
-                    break;
-                case 'inside':
-                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == 1) {
-                        return true;
-                    }
-                    break;
-                case 'ontop':
-                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
-                        return true;
-                    }
-                    break;
-                case 'under':
-                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y < relativeObjCoord.y) {
-                        return true;
-                    }
-                    break;
-                case 'above':
-                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y > relativeObjCoord.y) {
-                        return true;
-                    }
-                    break;
-                case 'beside':
-                    if (Math.abs(objectCoord.x - relativeObjCoord.x) == 1)  {
-                        return true;
-                    }
-                    break;
+    function isRelationValid(parsedObject: string, relativeObject : string, relation : string, state: WorldState): boolean {
+        let objectCoord = getCoordinates(parsedObject, state);
+        let relativeObjCoord = getCoordinates(relativeObject, state);
 
-            }
+        switch (relation) {
+            case 'leftof':
+                if (objectCoord.x < relativeObjCoord) {
+                    return true;
+                }
+                break;
+            case 'rightof':
+                if (objectCoord.x > relativeObjCoord) {
+                    return true;
+                }
+                break;
+            case 'inside':
+                if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == 1) {
+                    return true;
+                }
+                break;
+            case 'ontop':
+                if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
+                    return true;
+                }
+                break;
+            case 'under':
+                if (objectCoord.x == relativeObjCoord.x && objectCoord.y < relativeObjCoord.y) {
+                    return true;
+                }
+                break;
+            case 'above':
+                if (objectCoord.x == relativeObjCoord.x && objectCoord.y > relativeObjCoord.y) {
+                    return true;
+                }
+                break;
+            case 'beside':
+                if (Math.abs(objectCoord.x - relativeObjCoord.x) == 1) {
+                    return true;
+                }
+                break;
+
         }
         return false;
     }
+    
+    // function isObjectInLocation(objectName: string, location: Parser.Location, state: WorldState): boolean {
+    //     let relation: string = location.relation;
+    //     let possibleRelationObjects: string[] = interpretEntity(location.entity, state);
+        
+    //     let objectCoord = getCoordinates(objectName, state);
+
+    //     for (let relationObject of possibleRelationObjects) {
+    //         let relativeObjCoord = getCoordinates(relationObject, state);
+            
+    //         switch (relation) {
+    //             case 'leftof': 
+    //                 if (objectCoord.x < relativeObjCoord) {
+    //                     return true; // Should it really return true as soon as there is something that fits?
+    //                 }
+    //                 break;
+    //             case 'rightof':
+    //                 if (objectCoord.x > relativeObjCoord) {
+    //                     return true; // Should it really return true as soon as there is something that fits?
+    //                 }
+    //                 break;
+    //             case 'inside':
+    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == 1) {
+    //                     return true;
+    //                 }
+    //                 break;
+    //             case 'ontop':
+    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
+    //                     return true;
+    //                 }
+    //                 break;
+    //             case 'under':
+    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y < relativeObjCoord.y) {
+    //                     return true;
+    //                 }
+    //                 break;
+    //             case 'above':
+    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y > relativeObjCoord.y) {
+    //                     return true;
+    //                 }
+    //                 break;
+    //             case 'beside':
+    //                 if (Math.abs(objectCoord.x - relativeObjCoord.x) == 1)  {
+    //                     return true;
+    //                 }
+    //                 break;
+
+    //         }
+    //     }
+    //     return false;
+    // }
 
     function checkSimilarity(parseObject : Parser.Object, worldObject : Parser.Object) : boolean {
         let sameForm: boolean, sameColor: boolean, sameSize: boolean;
@@ -251,23 +304,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return sameForm && sameColor && sameSize;
     }
 
-    function interpretLocation(location : Parser.Location, state : WorldState) : any {
-        let entity : string[] = interpretEntity(location.entity, state); 
-        let relation : string = location.relation;
-
-        switch (relation) {
-            case 'leftof': 
-
-
-    // "leftof"
-    // "rightof"
-    // "inside"
-    // "ontop"
-    // "under"
-    // "beside"
-    // "above"
-        }
-    }
+    
 
     function getCoordinates(objectName : string, state : WorldState) : any {
         for (let x=0; x < state.stacks.length; x++) {
