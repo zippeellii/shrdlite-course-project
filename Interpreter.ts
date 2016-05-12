@@ -36,11 +36,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 * @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
 */    
     export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
-        var errors : Error[] = [];
-        var interpretations : InterpretationResult[] = [];
+        let errors : Error[] = [];
+        let interpretations : InterpretationResult[] = [];
         parses.forEach((parseresult) => {
             try {
-                var result : InterpretationResult = <InterpretationResult>parseresult;
+                let result : InterpretationResult = <InterpretationResult>parseresult;
                 result.interpretation = interpretCommand(result.parse, currentState);
                 interpretations.push(result);
             } catch(err) {
@@ -107,6 +107,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
         
+        let interpretation: DNFFormula = [[]];
+        
         switch (cmd.command) {
             case "move":
             case "take":
@@ -117,7 +119,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 
                 console.log("Location: " + location);
                 
-                // var interpretation: DNFFormula = [[]];
+                for (let name of objectNames) {
+                    let literal : Literal = { polarity: true, relation: "ontop", args: [name, 'floor'] };
+                    let literals: Literal[] = [];
+                    literals.push(literal);
+                    interpretation.push(literals);
+                }
 
 
                 break;
@@ -126,31 +133,25 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         }
 
-    // "leftof"
-    // "rightof"
-    // "inside"
-    // "ontop"
-    // "under"
-    // "beside"
-    // "above"
-
-
         // This returns a dummy interpretation involving two random objects in the world
-        var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        var a : string = objects[Math.floor(Math.random() * objects.length)];
-        var b : string = objects[Math.floor(Math.random() * objects.length)];
-        var interpretation : DNFFormula = [[
-            {polarity: true, relation: "ontop", args: [a, "floor"]},
-            {polarity: true, relation: "holding", args: [b]}
-        ]];
+        // let objects : string[] = Array.prototype.concat.apply([], state.stacks);
+        // let a : string = objects[Math.floor(Math.random() * objects.length)];
+        // let b : string = objects[Math.floor(Math.random() * objects.length)];
+        // let interpretation : DNFFormula = [[
+        //     {polarity: true, relation: "ontop", args: [a, "floor"]},
+        //     {polarity: true, relation: "holding", args: [b]}
+        // ]];
         return interpretation;
     }
 
-    function interpretEntity(entity : Parser.Entity, state : WorldState) {
-        return interpretObject(entity.object, state);
+    function interpretEntity(entity : Parser.Entity, state : WorldState) : string[] {
+        let quantifier: string = entity.quantifier;
+        let possibleObjects : string[] = interpretObject(entity.object, state);
+        return possibleObjects;
     }
 
-    function interpretObject(object : Parser.Object, state : WorldState) : any {
+    function interpretObject(object : Parser.Object, state : WorldState) : string[] {
+        // Base case
         if (!object.object) {
             let possibleObjects : string[] = [];
             for (let worldObjectName in state.objects) {
@@ -160,10 +161,72 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
             }
             return possibleObjects;
+            
         } else {
-            return interpretObject(object.object, state);
+            let possibleObjects : string[] = interpretObject(object.object, state);
+            let location : Parser.Location = object.location;
+            let checkedObjects: string[] = []; 
+            for (let uncheckedObject of possibleObjects) {
+                if (isObjectInLocation(uncheckedObject, location, state)) { // Filter array instead?
+                    checkedObjects.push(uncheckedObject);
+                }
+            }
+            return checkedObjects;
         }
 
+        
+
+    }
+
+    function isObjectInLocation(objectName: string, location: Parser.Location, state: WorldState): boolean {
+        let relation: string = location.relation;
+        let possibleRelationObjects: string[] = interpretEntity(location.entity, state);
+        
+        let objectCoord = getCoordinates(objectName, state);
+
+        for (let relationObject of possibleRelationObjects) {
+            let relativeObjCoord = getCoordinates(relationObject, state);
+            
+            switch (relation) {
+                case 'leftof': 
+                    if (objectCoord.x < relativeObjCoord) {
+                        return true; // Should it really return true as soon as there is something that fits?
+                    }
+                    break;
+                case 'rightof':
+                    if (objectCoord.x > relativeObjCoord) {
+                        return true; // Should it really return true as soon as there is something that fits?
+                    }
+                    break;
+                case 'inside':
+                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == 1) {
+                        return true;
+                    }
+                    break;
+                case 'ontop':
+                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
+                        return true;
+                    }
+                    break;
+                case 'under':
+                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y < relativeObjCoord.y) {
+                        return true;
+                    }
+                    break;
+                case 'above':
+                    if (objectCoord.x == relativeObjCoord.x && objectCoord.y > relativeObjCoord.y) {
+                        return true;
+                    }
+                    break;
+                case 'beside':
+                    if (Math.abs(objectCoord.x - relativeObjCoord.x) == 1)  {
+                        return true;
+                    }
+                    break;
+
+            }
+        }
+        return false;
     }
 
     function checkSimilarity(parseObject : Parser.Object, worldObject : Parser.Object) : boolean {
@@ -188,28 +251,33 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return sameForm && sameColor && sameSize;
     }
 
-    function interpretLocation(location : Parser.Location, state : WorldState) {
+    function interpretLocation(location : Parser.Location, state : WorldState) : any {
+        let entity : string[] = interpretEntity(location.entity, state); 
+        let relation : string = location.relation;
 
-    }
+        switch (relation) {
+            case 'leftof': 
 
-    function isLeftOf(shouldBeLeft : Parser.Object, shouldBeRight : Parser.Object) : boolean {
-        
-        if (true) {
-            return true;
+
+    // "leftof"
+    // "rightof"
+    // "inside"
+    // "ontop"
+    // "under"
+    // "beside"
+    // "above"
         }
-
     }
 
-
-    function getCoordinates(object : Parser.Object, state : WorldState) {
-        // for (let stack in stacks) {
-        //     if (stack) {
-                
-        //     }
-        // }
+    function getCoordinates(objectName : string, state : WorldState) : any {
+        for (let x=0; x < state.stacks.length; x++) {
+            for (let y = 0; y < state.stacks[x].length; y++) {
+                if (state.stacks[x][y] == objectName) {
+                    return { x:x, y:y };
+                }
+            }
+        }
     }
-
-
 
 }
 
