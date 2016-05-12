@@ -109,16 +109,20 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         
         let interpretation: DNFFormula = [];
         
+        // console.log(cmd);
+
         let objectNames = interpretEntity(cmd.entity, state);
         console.log("Object names: " + objectNames.toString());
         
         switch (cmd.command) {
             case "take":
                 for (let name of objectNames) {
-                    let conjunction: Conjunction = [];
-                    let literal: Literal = { polarity: true, relation: 'holding', args: [name] };
-                    conjunction.push(literal);
-                    interpretation.push(conjunction);
+                    // if (isFree(name, state)) {
+                        let conjunction: Conjunction = [];
+                        let literal: Literal = { polarity: true, relation: 'holding', args: [name] };
+                        conjunction.push(literal);
+                        interpretation.push(conjunction);
+                    // }
                 }
                 break;
             case "move":
@@ -241,6 +245,16 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return false;
     }
     
+    function isFree(objectName : string, state : WorldState) : boolean {
+        
+        let objectCoord = getCoordinates(objectName, state);
+        console.log("coord " + objectName + " " + objectCoord.x + " " + objectCoord.y);
+        console.log(state.stacks[objectCoord.x].toString());
+        let stackSize: number = state.stacks[objectCoord.x].length;
+        console.log("ssize: " + stackSize);
+        return objectCoord.y == stackSize - 1;
+    }
+
     // function isObjectInLocation(objectName: string, location: Parser.Location, state: WorldState): boolean {
     //     let relation: string = location.relation;
     //     let possibleRelationObjects: string[] = interpretEntity(location.entity, state);
