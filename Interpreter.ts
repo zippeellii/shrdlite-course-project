@@ -149,6 +149,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 for(var l = 0; l < entities[k].length; l++){
                   if(cmd.location.relation =='inside'){
                     if(checkOnTopOf(entities[k][l],locationEntities[i][j], state)){
+                      console.log('THIS IS SO OKAY');
                       interpretation.push([{polarity: true, relation: "inside", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
@@ -414,6 +415,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                         continue;
                     }
                     for (let i = 0; i < state.stacks.length; i++) {
+                      if (entity[0][0] == 'floor') {
+                          if(state.stacks[i][0]) {
+                            innerTmp.push(state.stacks[i][0]);
+                          }
+                      } else {
                         for (let j = 0; j < state.stacks[i].length; j++) {
                             if (entity[k].indexOf(state.stacks[i][j]) > -1) {
                                 if (state.stacks[i][j+1]) {
@@ -421,6 +427,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                                 }
                             }
                         }
+                      }
                     }
                     tmp.push(innerTmp);
                 }
