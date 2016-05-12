@@ -170,7 +170,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                     if (checkSimilarity(object, worldObject)) {
                             possibleObjects.push(worldObjectName);
                     }
-                    
                 }
             }
             return possibleObjects;
@@ -190,9 +189,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
             return checkedObjects;
         }
-
-        
-
     }
 
     function interpretLocation(location: Parser.Location, state: WorldState): any {
@@ -244,7 +240,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                     return true;
                 }
                 break;
-
         }
         return false;
     }
@@ -258,57 +253,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         console.log("ssize: " + stackSize);
         return objectCoord.y == stackSize - 1;
     }
-
-    // function isObjectInLocation(objectName: string, location: Parser.Location, state: WorldState): boolean {
-    //     let relation: string = location.relation;
-    //     let possibleRelationObjects: string[] = interpretEntity(location.entity, state);
-        
-    //     let objectCoord = getCoordinates(objectName, state);
-
-    //     for (let relationObject of possibleRelationObjects) {
-    //         let relativeObjCoord = getCoordinates(relationObject, state);
-            
-    //         switch (relation) {
-    //             case 'leftof': 
-    //                 if (objectCoord.x < relativeObjCoord) {
-    //                     return true; // Should it really return true as soon as there is something that fits?
-    //                 }
-    //                 break;
-    //             case 'rightof':
-    //                 if (objectCoord.x > relativeObjCoord) {
-    //                     return true; // Should it really return true as soon as there is something that fits?
-    //                 }
-    //                 break;
-    //             case 'inside':
-    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == 1) {
-    //                     return true;
-    //                 }
-    //                 break;
-    //             case 'ontop':
-    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
-    //                     return true;
-    //                 }
-    //                 break;
-    //             case 'under':
-    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y < relativeObjCoord.y) {
-    //                     return true;
-    //                 }
-    //                 break;
-    //             case 'above':
-    //                 if (objectCoord.x == relativeObjCoord.x && objectCoord.y > relativeObjCoord.y) {
-    //                     return true;
-    //                 }
-    //                 break;
-    //             case 'beside':
-    //                 if (Math.abs(objectCoord.x - relativeObjCoord.x) == 1)  {
-    //                     return true;
-    //                 }
-    //                 break;
-
-    //         }
-    //     }
-    //     return false;
-    // }
 
     function checkSimilarity(parseObject : Parser.Object, worldObject : Parser.Object) : boolean {
         let sameForm: boolean, sameColor: boolean, sameSize: boolean;
