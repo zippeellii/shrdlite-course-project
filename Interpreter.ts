@@ -167,6 +167,13 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                       interpretation.push([{polarity: true, relation: "beside", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
+                  if(cmd.location.relation == 'ontop'){
+                    if(checkOnTopOf(entities[k][l],locationEntities[i][j], state)){
+                      console.log('In ontop, taking location entity: ' + locationEntities[i][j]);
+                      console.log('In ontop, taking entity: ' + entities[k][l]);
+                      interpretation.push([{polarity: true, relation: "ontop", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
                 }
               }
             }
@@ -191,8 +198,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
           }
         }
-
-        console.log("Interpretations: " + interpretation);
+        console.log('Stringify literal' + stringifyLiteral(interpretation[0][0]))
         if(interpretation.length == 0){
           return undefined;
         }
@@ -202,6 +208,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     //TODO: Need to implement pyramid etc.
     function checkOnTopOf(object1 : string, object2 : string, state : WorldState) : boolean{
       var objects = state.objects;
+      if(object2 == 'floor'){
+        return true;
+      }
       //A ball cannot be on top of anything other than a box (inside) or the floor
       //TODO: This should check the condition for floor aswell
       if(objects[object1].form == 'ball' && objects[object2].form != 'box'){
@@ -264,6 +273,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     function findObject(object : Parser.Object, state : WorldState) : string[] {
       //No more recursive objects
       var tmp : string[] = [];
+      if(object.form == 'floor'){
+        tmp.push('floor');
+      }
       if(object.object == undefined){
         //For all objects, find one matching
         for(var obj in state.objects){
