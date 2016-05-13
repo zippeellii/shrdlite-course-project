@@ -171,7 +171,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return true;
       }
       //A ball cannot be on top of anything other than a box (inside) or the floor
-      //TODO: This should check the condition for floor aswell
       if(objects[object1].form == 'ball' && objects[object2].form != 'box'){
         return false;
       }
@@ -200,26 +199,30 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length-1], state);
         }
       }
-      //For now, above need same properties as onTopOf
-      return checkOnTopOf(object1, object2, state);
+      //No stack contained object2
+      return false;
     }
     //Check that object1 can be under object2
     var checkUnder = function(object1 : string, object2 : string, state : WorldState) : boolean{
-      //If one is under the other is above
+      //A ball cannot be under antyhing
+      if(state.objects[object2].form == 'ball'){
+        return false;
+      }
+      //If one can exist under the other is above
       return checkAbove(object2, object1, state);
     }
     //Check that object1 can be beside object2
     var checkBeside = function(object1 : string, object2 : string, state : WorldState) : boolean{
-      return true;
+      return object1 != object2;
     }
     //Check that object1 can be left of object2
     var checkLeftOf = function(object1 : string, object2 : string, state : WorldState) : boolean{
-      return object1!=object2;
+      return !(state.stacks[0].indexOf(object2) > -1) && object1 != object2;
 
     }
     //Check that object1 can be right of object2
     var checkRightOf = function(object1 : string, object2 : string, state : WorldState) : boolean{
-      return !(state.stacks[state.stacks.length].indexOf(object2));
+      return !(state.stacks[state.stacks.length].indexOf(object2) > -1) && object1 != object2;
     }
 
     function findObject(object : Parser.Object, state : WorldState) : string[] {
