@@ -1,0 +1,1 @@
+Not much to say. There are some physical laws that are not yet implemented. Also some modifications should be made to handle the different commands, like move and take. It handles them now but not explicitly. Probably something else that will appear along the way but the tests seem to work fine.
