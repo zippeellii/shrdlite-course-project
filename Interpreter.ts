@@ -157,9 +157,19 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                       interpretation.push([{polarity: true, relation: "above", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
+                  if(cmd.location.relation == 'under'){
+                    if(checkUnder(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "under", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
                   if(cmd.location.relation == 'leftof'){
                     if(checkLeftOf(entities[k][l],locationEntities[i][j], state)){
                       interpretation.push([{polarity: true, relation: "leftof", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
+                  if(cmd.location.relation == 'rightof'){
+                    if(checkRightOf(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "rightof", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
                   if(cmd.location.relation == 'beside'){
@@ -169,8 +179,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                   }
                   if(cmd.location.relation == 'ontop'){
                     if(checkOnTopOf(entities[k][l],locationEntities[i][j], state)){
-                      console.log('In ontop, taking location entity: ' + locationEntities[i][j]);
-                      console.log('In ontop, taking entity: ' + entities[k][l]);
                       interpretation.push([{polarity: true, relation: "ontop", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
