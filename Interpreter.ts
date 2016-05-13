@@ -1,5 +1,6 @@
 ///<reference path="World.ts"/>
 ///<reference path="Parser.ts"/>
+///<reference path="lib/collections.ts"/>
 
 /**
 * Interpreter module
@@ -107,6 +108,15 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
+      //Maps a relation to a the phsyics function correlating
+      var physicFuncionsMap = new collections.Dictionary<string, Function>();
+      physicFuncionsMap.setValue('inside', checkOnTopOf);
+      physicFuncionsMap.setValue('above', checkAbove);
+      physicFuncionsMap.setValue('under', checkUnder);
+      physicFuncionsMap.setValue('leftof', checkLeftOf);
+      physicFuncionsMap.setValue('rightof', checkRightOf);
+      physicFuncionsMap.setValue('beside', checkBeside);
+      physicFuncionsMap.setValue('ontop', checkOnTopOf);
 
         removeObjectsNotInStacks(state);
 
@@ -119,40 +129,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             for(var j = 0; j < locationObjects[i].length; j++){
               for(var k = 0; k < entityObjects.length; k++){
                 for(var l = 0; l < entityObjects[k].length; l++){
-                  if(cmd.location.relation =='inside'){
-                    if(checkOnTopOf(entityObjects[k][l],locationObjects[i][j], state)){
-                      interpretation.push([{polarity: true, relation: "inside", args: [entityObjects[k][l], locationObjects[i][j]]}]);
-                    }
-                  }
-                  if(cmd.location.relation == 'above'){
-                    if(checkAbove(entityObjects[k][l],locationObjects[i][j], state)){
-                      interpretation.push([{polarity: true, relation: "above", args: [entityObjects[k][l], locationObjects[i][j]]}]);
-                    }
-                  }
-                  if(cmd.location.relation == 'under'){
-                    if(checkUnder(entityObjects[k][l],locationObjects[i][j], state)){
-                      interpretation.push([{polarity: true, relation: "under", args: [entityObjects[k][l], locationObjects[i][j]]}]);
-                    }
-                  }
-                  if(cmd.location.relation == 'leftof'){
-                    if(checkLeftOf(entityObjects[k][l],locationObjects[i][j], state)){
-                      interpretation.push([{polarity: true, relation: "leftof", args: [entityObjects[k][l], locationObjects[i][j]]}]);
-                    }
-                  }
-                  if(cmd.location.relation == 'rightof'){
-                    if(checkRightOf(entityObjects[k][l],locationObjects[i][j], state)){
-                      interpretation.push([{polarity: true, relation: "rightof", args: [entityObjects[k][l], locationObjects[i][j]]}]);
-                    }
-                  }
-                  if(cmd.location.relation == 'beside'){
-                    if(checkBeside(entityObjects[k][l],locationObjects[i][j], state)){
-                      interpretation.push([{polarity: true, relation: "beside", args: [entityObjects[k][l], locationObjects[i][j]]}]);
-                    }
-                  }
-                  if(cmd.location.relation == 'ontop'){
-                    if(checkOnTopOf(entityObjects[k][l],locationObjects[i][j], state)){
-                      interpretation.push([{polarity: true, relation: "ontop", args: [entityObjects[k][l], locationObjects[i][j]]}]);
-                    }
+                  if(physicFuncionsMap.getValue(cmd.location.relation)(entityObjects[k][l], locationObjects[i][j], state)){
+                    interpretation.push([{polarity: true, relation: cmd.location.relation, args: [entityObjects[k][l], locationObjects[i][j]]}]);
                   }
                 }
               }
@@ -182,9 +160,10 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         }
         return interpretation;
     }
+    //****Functions for checking physical laws****
     //Check that object1 can be on top of object 2
     //TODO: Need to implement pyramid etc.
-    function checkOnTopOf(object1 : string, object2 : string, state : WorldState) : boolean {
+    var checkOnTopOf = function (object1 : string, object2 : string, state : WorldState) : boolean {
       if (object2 == undefined || object1 == undefined) {
           return false;
       }
@@ -216,7 +195,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
       return true;
     }
     //Check that object1 can be above object2
-    function checkAbove(object1 : string, object2 : string, state : WorldState) : boolean{
+    var checkAbove = function(object1 : string, object2 : string, state : WorldState) : boolean{
       for(let i = 0; i < state.stacks.length; i++){
         if(state.stacks[i].indexOf(object2) != -1){
           return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length-1], state);
@@ -226,21 +205,21 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
       return checkOnTopOf(object1, object2, state);
     }
     //Check that object1 can be under object2
-    function checkUnder(object1 : string, object2 : string, state : WorldState) : boolean{
+    var checkUnder = function(object1 : string, object2 : string, state : WorldState) : boolean{
       //If one is under the other is above
       return checkAbove(object2, object1, state);
     }
     //Check that object1 can be beside object2
-    function checkBeside(object1 : string, object2 : string, state : WorldState) : boolean{
+    var checkBeside = function(object1 : string, object2 : string, state : WorldState) : boolean{
       return true;
     }
     //Check that object1 can be left of object2
-    function checkLeftOf(object1 : string, object2 : string, state : WorldState) : boolean{
+    var checkLeftOf = function(object1 : string, object2 : string, state : WorldState) : boolean{
       return object1!=object2;
 
     }
     //Check that object1 can be right of object2
-    function checkRightOf(object1 : string, object2 : string, state : WorldState) : boolean{
+    var checkRightOf = function(object1 : string, object2 : string, state : WorldState) : boolean{
       return !(state.stacks[state.stacks.length].indexOf(object2));
     }
 
