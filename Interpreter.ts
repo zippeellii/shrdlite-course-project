@@ -179,12 +179,15 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
             return possibleObjects;
 
+        // Recursive case
         } else {
             let possibleObjects : string[] = interpretObject(object.object, state);
+            console.log('pobjs: ' + possibleObjects);
             let location : Parser.Location = object.location;
             let checkedObjects: string[] = []; 
             for (let uncheckedObject of possibleObjects) {
                 let possibleLocations = interpretLocation(location, state);
+                // console.log('plocats: ' + possibleLocations.possibleObjects.toString());
                 for (let possibleRelativeObject of possibleLocations.possibleObjects) {
                     if (isRelationValid(uncheckedObject, possibleRelativeObject, possibleLocations.relation, state)) { // Filter array instead?
                         // console.log('valid relation');
@@ -225,7 +228,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
                 break;
             case 'ontop':
-                if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
+                if (relativeObject == 'floor') {
+                    return objectCoord.y == 0;
+                } else if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
                     return true;
                 }
                 break;
@@ -281,6 +286,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     }
 
     function getCoordinates(objectName : string, state : WorldState) : any {
+        
         for (let x=0; x < state.stacks.length; x++) {
             for (let y = 0; y < state.stacks[x].length; y++) {
                 if (state.stacks[x][y] == objectName) {
