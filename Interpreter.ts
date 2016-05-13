@@ -49,7 +49,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
         });
         if (interpretations.length) {
-          console.log(interpretations);
             return interpretations;
         } else {
             // only throw the first error found
@@ -545,7 +544,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 return [];
             }
         } else if (node.quantifier == "any") {
-            console.log("- any/the");
             // Returns first value from collection
             var tmp : string[][] = [];
 
@@ -559,7 +557,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
             return tmp;
         } else if (node.quantifier == "all") {
-            console.log("- all");
             // Returns whole collection
             return entity;
         }
