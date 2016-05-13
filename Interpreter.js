@@ -14,6 +14,7 @@ var Interpreter;
             }
         });
         if (interpretations.length) {
+            console.log(interpretations);
             return interpretations;
         }
         else {
@@ -65,9 +66,19 @@ var Interpreter;
                                     interpretation.push([{ polarity: true, relation: "above", args: [entities[k][l], locationEntities[i][j]] }]);
                                 }
                             }
+                            if (cmd.location.relation == 'under') {
+                                if (checkUnder(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "under", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
                             if (cmd.location.relation == 'leftof') {
                                 if (checkLeftOf(entities[k][l], locationEntities[i][j], state)) {
                                     interpretation.push([{ polarity: true, relation: "leftof", args: [entities[k][l], locationEntities[i][j]] }]);
+                                }
+                            }
+                            if (cmd.location.relation == 'rightof') {
+                                if (checkRightOf(entities[k][l], locationEntities[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "rightof", args: [entities[k][l], locationEntities[i][j]] }]);
                                 }
                             }
                             if (cmd.location.relation == 'beside') {
@@ -103,9 +114,8 @@ var Interpreter;
                 }
             }
         }
-        console.log('Stringify literal' + stringifyLiteral(interpretation[0][0]));
         if (interpretation.length == 0) {
-            return undefined;
+            throw new Error('No intepretation found');
         }
         return interpretation;
     }

@@ -48,6 +48,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
         });
         if (interpretations.length) {
+          console.log(interpretations);
             return interpretations;
         } else {
             // only throw the first error found
@@ -110,8 +111,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var command = cmd.command;
         var entity = cmd.entity;
         var location = cmd.location;
-
         var tast : boolean = false;
+
         for(var obj in state.objects){
           tast = false;
           for(var id in state.stacks){
@@ -143,9 +144,19 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                       interpretation.push([{polarity: true, relation: "above", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
+                  if(cmd.location.relation == 'under'){
+                    if(checkUnder(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "under", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
                   if(cmd.location.relation == 'leftof'){
                     if(checkLeftOf(entities[k][l],locationEntities[i][j], state)){
                       interpretation.push([{polarity: true, relation: "leftof", args: [entities[k][l], locationEntities[i][j]]}]);
+                    }
+                  }
+                  if(cmd.location.relation == 'rightof'){
+                    if(checkRightOf(entities[k][l],locationEntities[i][j], state)){
+                      interpretation.push([{polarity: true, relation: "rightof", args: [entities[k][l], locationEntities[i][j]]}]);
                     }
                   }
                   if(cmd.location.relation == 'beside'){
@@ -181,14 +192,14 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
           }
         }
-        console.log('Stringify literal' + stringifyLiteral(interpretation[0][0]));
         if(interpretation.length == 0){
-          return undefined;
+          throw new Error('No intepretation found');
         }
         return interpretation;
     }
     //Check that object1 can be on top of object 2
     //TODO: Need to implement pyramid etc.
+
     function checkOnTopOf(object1 : string, object2 : string, state : WorldState) : boolean {
       if (object2 == undefined || object1 == undefined) {
           return false;
@@ -573,7 +584,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         } else if (node.quantifier == "any") {
             console.log("- any/the");
             // Returns first value from collection
-
             var tmp : string[][] = [];
 
             for (let i = 0; i < entity.length; i++) {
