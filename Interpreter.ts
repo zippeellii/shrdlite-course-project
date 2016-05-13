@@ -128,17 +128,29 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             case "move":
                 let possibleLocations = interpretLocation(cmd.location, state);
                 console.log("Locations: " + possibleLocations.possibleObjects.toString());
-                
+
                 for (let name of objectNames) {
                     for (let location of possibleLocations.possibleObjects) {
-                        if (name != location) {
+                        if (name != location && physicsWork(name, location, possibleLocations.relation, state)) {
                             let conjunction: Conjunction = [];
                             let literal : Literal = { polarity: true, relation: possibleLocations.relation, args: [name, location] };
+                            // console.log('literal to add: ' + literal.relation + ' args: ' + literal.args.toString());
                             conjunction.push(literal);
                             interpretation.push(conjunction);
                         }
                     }
                 }
+
+                
+
+                // console.log('interlength: ' + interpretation.length);
+                // for (let conjunction of interpretation) {
+                //     console.log('conjunction length: ' + conjunction.length);
+                //     for (let literal of conjunction) {
+                //         console.log('literal: ' + literal.args.toString());
+
+                //     }
+                // }
                 break;
         }
 
@@ -150,6 +162,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         //     {polarity: true, relation: "ontop", args: [a, "floor"]},
         //     {polarity: true, relation: "holding", args: [b]}
         // ]];
+
+        // if (interpretation.length == 0) {
+        //     return undefined;
+        // } else {
+        //     return interpretation;
+        // }
         return interpretation;
     }
 
@@ -213,46 +231,79 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         // console.log("objco: " + parsedObject + " " + objectCoord.x + " relco: " + relativeObject + " " + relativeObjCoord.x + " relation: " + relation);
         switch (relation) {
             case 'leftof':
-                if (objectCoord.x < relativeObjCoord.x) {
-                    return true;
-                }
-                break;
+                return objectCoord.x < relativeObjCoord.x;
             case 'rightof':
-                if (objectCoord.x > relativeObjCoord.x) {
-                    return true;
-                }
-                break;
+                return objectCoord.x > relativeObjCoord.x;
             case 'inside':
-                if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == 1) {
-                    return true;
-                }
-                break;
+                return fitsIn(parsedObject, relativeObject, state) && 
+                    objectCoord.x === relativeObjCoord.x && 
+                    objectCoord.y - relativeObjCoord.y === 1;
             case 'ontop':
                 if (relativeObject == 'floor') {
-                    return objectCoord.y == 0;
-                } else if (objectCoord.x == relativeObjCoord.x && objectCoord.y - relativeObjCoord.y == -1) {
+                    return objectCoord.y === 0;
+                } else if (objectCoord.x === relativeObjCoord.x && objectCoord.y - relativeObjCoord.y === -1) {
                     return true;
                 }
                 break;
             case 'under':
-                if (objectCoord.x == relativeObjCoord.x && objectCoord.y < relativeObjCoord.y) {
-                    return true;
-                }
-                break;
+                return objectCoord.x === relativeObjCoord.x && objectCoord.y < relativeObjCoord.y;
             case 'above':
-                if (objectCoord.x == relativeObjCoord.x && objectCoord.y > relativeObjCoord.y) {
-                    return true;
-                }
-                break;
+                return objectCoord.x === relativeObjCoord.x && objectCoord.y > relativeObjCoord.y;
             case 'beside':
-                if (Math.abs(objectCoord.x - relativeObjCoord.x) == 1) {
-                    return true;
-                }
-                break;
+                return Math.abs(objectCoord.x - relativeObjCoord.x) === 1;
         }
         return false;
     }
+
+    function physicsWork(object: string, relativeObject : string, relation : string, state : WorldState) : boolean {
+        
+
+        switch (relation) {
+            case 'leftof':
+                return true;
+            case 'rightof':
+                return true;
+            case 'inside':
+                return fitsIn(object, relativeObject, state);
+            case 'ontop':
+                // return fitsIn(object, relativeObject, state);
+                // if (getForm(relativeObject, state) === 'ball') {
+                //     return false;
+                // }
+                return true;
+            case 'under':
+                return true;
+            case 'above':
+                // return fitsIn(object, relativeObject, state);
+                if (getForm(relativeObject, state) === 'ball') {
+                    return false;
+                }
+                return true;
+            case 'beside':
+                return true;
+            default: 
+                return true;
+        }
+
+    }
     
+    function fitsIn(fittingObject : string, receptacleObject : string, state : WorldState) : boolean {
+        console.log('Size:' + state.objects[receptacleObject].size);
+        if ( getSize(receptacleObject, state) === 'small') {
+            return getSize(fittingObject, state) === 'small'
+        } else {
+            return true;
+        }
+    }
+
+    function getForm(object : string, state : WorldState) : string {
+        return state.objects[object].form;
+    }
+
+    function getSize(object: string, state: WorldState): string {
+        return state.objects[object].size;
+    }    
+
     function isFree(objectName : string, state : WorldState) : boolean {
         
         let objectCoord = getCoordinates(objectName, state);
