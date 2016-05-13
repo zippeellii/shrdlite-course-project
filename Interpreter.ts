@@ -48,6 +48,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
         });
         if (interpretations.length) {
+          console.log(interpretations);
             return interpretations;
         } else {
             // only throw the first error found
@@ -110,7 +111,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var command = cmd.command;
         var entity = cmd.entity;
         var location = cmd.location;
-        console.log("Object: " + findObject(cmd.entity.object, state));
 
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var a : string = objects[Math.floor(Math.random() * objects.length)];
@@ -132,17 +132,11 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           }
         }
 
-        console.log(cmd);
-        console.log(state);
-        console.log("________");
         var entities = findEntityID(cmd.entity.object, state);
-        console.log('Found number entities: ' + entities);
-        console.log("________");
         var interpretation : DNFFormula = [];
 
         if (cmd.location) {
           var locationEntities = findEntityID(cmd.location.entity, state);
-          console.log('Location entities: ' + locationEntities);
           for(var i = 0; i < locationEntities.length; i++){
             for(var j = 0; j < locationEntities[i].length; j++){
               for(var k = 0; k < entities.length; k++){
@@ -199,23 +193,20 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             for(var i = 0; i < entities.length; i++){
               var conjCommands : Literal[] = [];
               for(var j = 0; j < entities[i].length; j++){
-                console.log('Value of j: ' + j);
                 conjCommands.push({polarity: true, relation: "holding", args: [entities[i][j]]});
               }
               interpretation.push(conjCommands);
             }
           }
         }
-        console.log('Stringify literal' + stringifyLiteral(interpretation[0][0]))
         if(interpretation.length == 0){
-          return undefined;
+          throw new Error('No intepretation found');
         }
         return interpretation; // Remove
     }
     //Check that object1 can be on top of object 2
     //TODO: Need to implement pyramid etc.
     function checkOnTopOf(object1 : string, object2 : string, state : WorldState) : boolean{
-      console.log(object1 + " " + object2);
       if (object2 == undefined || object1 == undefined) {
           return false;
       }
@@ -469,8 +460,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 }
                 return tmp;
             } else if (node.relation == "beside") {
-                console.log("- beside");
-                console.log('This is what we get to beside: ' + entity);
                 // Return all objects beside the entity
 
                 var tmp : string[][] = [];
@@ -577,8 +566,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           var objects = findEntityID(node.object, state);
           var concatObjects : string[] = Array.prototype.concat.apply([], objects);
           var location = findEntityID(node.location, state);
-          console.log('Concated objects: ' + concatObjects);
-          console.log('Location objects: ' + location);
           for(let i = 0; i < location.length; i++){
             for(let j = 0; j < location[i].length; j++){
               if(concatObjects.indexOf(location[i][j]) == -1){
