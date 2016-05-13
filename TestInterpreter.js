@@ -135,63 +135,48 @@ var Interpreter;
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd, state) {
-        // This returns a dummy interpretation involving two random objects in the world
-        var command = cmd.command;
-        var entity = cmd.entity;
-        var location = cmd.location;
-        var tast = false;
-        for (var obj in state.objects) {
-            tast = false;
-            for (var id in state.stacks) {
-                if (state.stacks[id].indexOf(obj) > -1) {
-                    tast = true;
-                }
-            }
-            if (!tast) {
-                delete state.objects[obj];
-            }
-        }
-        var entities = getNodeObjects(cmd.entity.object, state);
+        removeObjectsNotInStacks(state);
+        var entityObjects = getNodeObjects(cmd.entity.object, state);
         var interpretation = [];
         if (cmd.location) {
-            var locationEntities = getNodeObjects(cmd.location.entity, state);
-            for (var i = 0; i < locationEntities.length; i++) {
-                for (var j = 0; j < locationEntities[i].length; j++) {
-                    for (var k = 0; k < entities.length; k++) {
-                        for (var l = 0; l < entities[k].length; l++) {
+            var locationObjects = getNodeObjects(cmd.location.entity, state);
+            for (var i = 0; i < locationObjects.length; i++) {
+                for (var j = 0; j < locationObjects[i].length; j++) {
+                    for (var k = 0; k < entityObjects.length; k++) {
+                        for (var l = 0; l < entityObjects[k].length; l++) {
                             if (cmd.location.relation == 'inside') {
-                                if (checkOnTopOf(entities[k][l], locationEntities[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "inside", args: [entities[k][l], locationEntities[i][j]] }]);
+                                if (checkOnTopOf(entityObjects[k][l], locationObjects[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "inside", args: [entityObjects[k][l], locationObjects[i][j]] }]);
                                 }
                             }
                             if (cmd.location.relation == 'above') {
-                                if (checkAbove(entities[k][l], locationEntities[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "above", args: [entities[k][l], locationEntities[i][j]] }]);
+                                if (checkAbove(entityObjects[k][l], locationObjects[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "above", args: [entityObjects[k][l], locationObjects[i][j]] }]);
                                 }
                             }
                             if (cmd.location.relation == 'under') {
-                                if (checkUnder(entities[k][l], locationEntities[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "under", args: [entities[k][l], locationEntities[i][j]] }]);
+                                if (checkUnder(entityObjects[k][l], locationObjects[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "under", args: [entityObjects[k][l], locationObjects[i][j]] }]);
                                 }
                             }
                             if (cmd.location.relation == 'leftof') {
-                                if (checkLeftOf(entities[k][l], locationEntities[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "leftof", args: [entities[k][l], locationEntities[i][j]] }]);
+                                if (checkLeftOf(entityObjects[k][l], locationObjects[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "leftof", args: [entityObjects[k][l], locationObjects[i][j]] }]);
                                 }
                             }
                             if (cmd.location.relation == 'rightof') {
-                                if (checkRightOf(entities[k][l], locationEntities[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "rightof", args: [entities[k][l], locationEntities[i][j]] }]);
+                                if (checkRightOf(entityObjects[k][l], locationObjects[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "rightof", args: [entityObjects[k][l], locationObjects[i][j]] }]);
                                 }
                             }
                             if (cmd.location.relation == 'beside') {
-                                if (checkBeside(entities[k][l], locationEntities[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "beside", args: [entities[k][l], locationEntities[i][j]] }]);
+                                if (checkBeside(entityObjects[k][l], locationObjects[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "beside", args: [entityObjects[k][l], locationObjects[i][j]] }]);
                                 }
                             }
                             if (cmd.location.relation == 'ontop') {
-                                if (checkOnTopOf(entities[k][l], locationEntities[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "ontop", args: [entities[k][l], locationEntities[i][j]] }]);
+                                if (checkOnTopOf(entityObjects[k][l], locationObjects[i][j], state)) {
+                                    interpretation.push([{ polarity: true, relation: "ontop", args: [entityObjects[k][l], locationObjects[i][j]] }]);
                                 }
                             }
                         }
@@ -201,17 +186,17 @@ var Interpreter;
         }
         else {
             if (cmd.entity.quantifier == 'any') {
-                for (var i = 0; i < entities.length; i++) {
-                    for (var j = 0; j < entities[i].length; j++) {
-                        interpretation.push([{ polarity: true, relation: "holding", args: [entities[i][j]] }]);
+                for (var i = 0; i < entityObjects.length; i++) {
+                    for (var j = 0; j < entityObjects[i].length; j++) {
+                        interpretation.push([{ polarity: true, relation: "holding", args: [entityObjects[i][j]] }]);
                     }
                 }
             }
             else {
-                for (var i = 0; i < entities.length; i++) {
+                for (var i = 0; i < entityObjects.length; i++) {
                     var conjCommands = [];
-                    for (var j = 0; j < entities[i].length; j++) {
-                        conjCommands.push({ polarity: true, relation: "holding", args: [entities[i][j]] });
+                    for (var j = 0; j < entityObjects[i].length; j++) {
+                        conjCommands.push({ polarity: true, relation: "holding", args: [entityObjects[i][j]] });
                     }
                     interpretation.push(conjCommands);
                 }
@@ -614,6 +599,21 @@ var Interpreter;
             }
         }
         return location;
+    }
+    function removeObjectsNotInStacks(state) {
+        // This removes all the objects in the state which is not in the stacks
+        var objectExists = false;
+        for (var obj in state.objects) {
+            objectExists = false;
+            for (var id in state.stacks) {
+                if (state.stacks[id].indexOf(obj) > -1) {
+                    objectExists = true;
+                }
+            }
+            if (!objectExists) {
+                delete state.objects[obj];
+            }
+        }
     }
 })(Interpreter || (Interpreter = {}));
 ///<reference path="World.ts"/>
