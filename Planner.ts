@@ -121,30 +121,27 @@ module Planner {
         //           "d");
 
         var graph = new StateGraph();
-        var startNode = new Node();
-        var result = aStarSearch(
-            graph,
-            startNode,
-            function (node : Node) : boolean { // Goal-checking function
-                for (let i = 0; i < interpretation.length; i++) {
-                    var fulfillsAll = true;
-                    for (let j = 0; j < interpretation[i].length; j++) {
-                        if (!interpretationAccepted(interpretation[i][j], node)) {
-                            fulfillsAll = false;
-                        }
-                    }
-                    if (fulfillsAll) {
-                        return true;
+        var startNode = new StateNode(state);
+        var isGoal = function (node : StateNode) : boolean { // Goal-checking function
+            for (let i = 0; i < interpretation.length; i++) {
+                var fulfillsAll = true;
+                for (let j = 0; j < interpretation[i].length; j++) {
+                    if (!interpretationAccepted(interpretation[i][j], node)) {
+                        fulfillsAll = false;
                     }
                 }
-                return false;
-            }, function (node : Node) : number { // Heuristics function
-                // Implement plz
-                return null;
-            },
-            99999);
+                if (fulfillsAll) {
+                    return true;
+                }
+            };
+          var heuristic = function (node : Node) : number { // Heuristics function
+              // Implement plz
+              return null;
+          };
 
-        return generatePlanFromResult(result);
+        //var result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
+
+        //return generatePlanFromResult(result);
     }
 
     function generatePlanFromResult (result : SearchResult<Node>) : string[] {
@@ -152,10 +149,11 @@ module Planner {
         return [];
     }
 
-    function interpretationAccepted (interpretation : Interpreter.Literal, node : Node) : boolean {
+    function interpretationAccepted (interpretation : Interpreter.Literal, node : StateNode) : boolean {
         // node contains the state to be tested
         // interpretation contains the Literal to test on
         return false;
     }
 
+}
 }
