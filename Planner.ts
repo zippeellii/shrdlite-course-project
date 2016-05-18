@@ -121,7 +121,7 @@ module Planner {
         //           "d");
 
         var graph = new StateGraph();
-        var startNode = new StateNode();
+        var startNode = new StateNode(state);
         var isGoal = function (node : StateNode) : boolean { // Goal-checking function
             for (let i = 0; i < interpretation.length; i++) {
                 var fulfillsAll = true;
@@ -135,17 +135,17 @@ module Planner {
                 }
             }
           };
-          var heuristic = function (node : Node) : number { // Heuristics function
+          var heuristic = function (node : StateNode) : number { // Heuristics function
               // Implement plz
               return null;
           };
 
-        var result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
+        var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10);
 
         return generatePlanFromResult(result);
     }
 
-    function generatePlanFromResult (result : SearchResult<Node>) : string[] {
+    function generatePlanFromResult (result : SearchResult<StateNode>) : string[] {
         // Iterate through result, for every node take the edge between them and store the char representing the action
         return [];
     }

@@ -29,9 +29,9 @@ var Planner;
     }
     Planner.stringify = stringify;
     function planInterpretation(interpretation, state) {
-        var graph = generateGraph(state);
-        var startNode = new Node();
-        var result = aStarSearch(graph, startNode, function (node) {
+        var graph = new StateGraph();
+        var startNode = new StateNode(state);
+        var isGoal = function (node) {
             for (var i = 0; i < interpretation.length; i++) {
                 var fulfillsAll = true;
                 for (var j = 0; j < interpretation[i].length; j++) {
@@ -43,17 +43,12 @@ var Planner;
                     return true;
                 }
             }
-            return false;
-        }, function (node) {
+        };
+        var heuristic = function (node) {
             return null;
-        }, 99999);
+        };
+        var result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
         return generatePlanFromResult(result);
-    }
-    function generateGraph(state) {
-        return generateGraphHelper(state, new collections.Set());
-    }
-    function generateGraphHelper(state, visited) {
-        return null;
     }
     function generatePlanFromResult(result) {
         return [];
