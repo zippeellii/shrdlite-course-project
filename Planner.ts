@@ -121,7 +121,7 @@ module Planner {
         //           "d");
 
         var graph = new StateGraph();
-        var startNode = new StateNode(state);
+        var startNode = new StateNode();
         var isGoal = function (node : StateNode) : boolean { // Goal-checking function
             for (let i = 0; i < interpretation.length; i++) {
                 var fulfillsAll = true;
@@ -133,15 +133,16 @@ module Planner {
                 if (fulfillsAll) {
                     return true;
                 }
-            };
+            }
+          };
           var heuristic = function (node : Node) : number { // Heuristics function
               // Implement plz
               return null;
           };
 
-        //var result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
+        var result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
 
-        //return generatePlanFromResult(result);
+        return generatePlanFromResult(result);
     }
 
     function generatePlanFromResult (result : SearchResult<Node>) : string[] {
@@ -154,6 +155,4 @@ module Planner {
         // interpretation contains the Literal to test on
         return false;
     }
-
-}
 }
