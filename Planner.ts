@@ -1,5 +1,8 @@
 ///<reference path="World.ts"/>
 ///<reference path="Interpreter.ts"/>
+///<reference path="Graph.ts"/>
+///<reference path="lib/collections.ts"/>
+///<reference path="lib/node.d.ts"/>
 
 /**
 * Planner module
@@ -75,49 +78,72 @@ module Planner {
      * be added using the `push` method.
      */
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
-        // This function returns a dummy plan involving a random stack
-        do {
-            var pickstack = Math.floor(Math.random() * state.stacks.length);
-        } while (state.stacks[pickstack].length == 0);
+        // // This function returns a dummy plan involving a random stack
+        // do {
+        //     var pickstack = Math.floor(Math.random() * state.stacks.length);
+        // } while (state.stacks[pickstack].length == 0);
+        // var plan : string[] = [];
+        //
+        // // First move the arm to the leftmost nonempty stack
+        // if (pickstack < state.arm) {
+        //     plan.push("Moving left");
+        //     for (var i = state.arm; i > pickstack; i--) {
+        //         plan.push("l");
+        //     }
+        // } else if (pickstack > state.arm) {
+        //     plan.push("Moving right");
+        //     for (var i = state.arm; i < pickstack; i++) {
+        //         plan.push("r");
+        //     }
+        // }
+        //
+        // // Then pick up the object
+        // var obj = state.stacks[pickstack][state.stacks[pickstack].length-1];
+        // plan.push("Picking up the " + state.objects[obj].form,
+        //           "p");
+        //
+        // if (pickstack < state.stacks.length-1) {
+        //     // Then move to the rightmost stack
+        //     plan.push("Moving as far right as possible");
+        //     for (var i = pickstack; i < state.stacks.length-1; i++) {
+        //         plan.push("r");
+        //     }
+        //
+        //     // Then move back
+        //     plan.push("Moving back");
+        //     for (var i = state.stacks.length-1; i > pickstack; i--) {
+        //         plan.push("l");
+        //     }
+        // }
+        //
+        // // Finally put it down again
+        // plan.push("Dropping the " + state.objects[obj].form,
+        //           "d");
+
         var plan : string[] = [];
 
-        // First move the arm to the leftmost nonempty stack
-        if (pickstack < state.arm) {
-            plan.push("Moving left");
-            for (var i = state.arm; i > pickstack; i--) {
-                plan.push("l");
-            }
-        } else if (pickstack > state.arm) {
-            plan.push("Moving right");
-            for (var i = state.arm; i < pickstack; i++) {
-                plan.push("r");
-            }
-        }
-
-        // Then pick up the object
-        var obj = state.stacks[pickstack][state.stacks[pickstack].length-1];
-        plan.push("Picking up the " + state.objects[obj].form,
-                  "p");
-
-        if (pickstack < state.stacks.length-1) {
-            // Then move to the rightmost stack
-            plan.push("Moving as far right as possible");
-            for (var i = pickstack; i < state.stacks.length-1; i++) {
-                plan.push("r");
-            }
-
-            // Then move back
-            plan.push("Moving back");
-            for (var i = state.stacks.length-1; i > pickstack; i--) {
-                plan.push("l");
-            }
-        }
-
-        // Finally put it down again
-        plan.push("Dropping the " + state.objects[obj].form,
-                  "d");
-
         return plan;
+    }
+
+    function goalCheck (node : Node) : boolean {
+        // goal : (n:Node) => boolean,
+        // Interpreter indata:
+        // Command, fromCollection, toCollection
+        return false;
+    }
+
+    function heuristic (node : Node) : number {
+        // heuristics : (n:Node) => number,
+        return 0;
+    }
+
+    function generateGraph (state : WorldState) : Graph<Node> {
+        // graph : Graph<Node>,
+        return null;
+    }
+
+    function generateGraphHelper (state: WorldState, visited : collections.Set<Node>) : Graph<Node> {
+        return null;
     }
 
 }
