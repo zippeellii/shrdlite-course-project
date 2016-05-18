@@ -120,7 +120,7 @@ module Planner {
         // plan.push("Dropping the " + state.objects[obj].form,
         //           "d");
 
-        var graph = generateGraph(state);
+        var graph = new StateGraph();
         var startNode = new Node();
         var result = aStarSearch(
             graph,
@@ -145,22 +145,6 @@ module Planner {
             99999);
 
         return generatePlanFromResult(result);
-    }
-
-    function generateGraph (state : WorldState) : Graph<Node> {
-        return generateGraphHelper(state, new collections.Set<Node>());
-    }
-
-    function generateGraphHelper (state: WorldState, visited : collections.Set<Node>) : Graph<Node> {
-        // Create a node from my current state
-        // if (visited.contains(node)) {
-        //     return self (base case)
-        // } else {
-        //     visited.add(node);
-        //     Create edges to new nodes which will recursively be defined (if not already in set)
-        // }
-
-        return null;
     }
 
     function generatePlanFromResult (result : SearchResult<Node>) : string[] {
