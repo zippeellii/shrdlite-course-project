@@ -64,7 +64,7 @@ class GridGraph implements Graph<GridNode> {
                         outgoing.push({
                             from: node,
                             to: next,
-                            cost: 1 
+                            cost: 1
                         });
                     }
                 }
@@ -89,7 +89,7 @@ class GridGraph implements Graph<GridNode> {
         for (var y = this.size.y-1; y >= 0; y--) {
             // row of borders
             for (var x = 0; x < this.size.x; x++) {
-                if (y == this.size.y || 
+                if (y == this.size.y ||
                     this.walls.contains(new GridNode({x:x,y:y})) ||
                     this.walls.contains(new GridNode({x:x,y:y+1}))
                    ) str += "+---"
@@ -115,6 +115,5 @@ class GridGraph implements Graph<GridNode> {
         }
         str += new Array(this.size.x + 1).join("+---") + "+\n";
         return str;
-    }    
+    }
 }
-
