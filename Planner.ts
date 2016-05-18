@@ -78,78 +78,76 @@ module Planner {
      * be added using the `push` method.
      */
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
-        var graph = new StateGraph();
-        var startNode = new StateNode();
-        var result = aStarSearch(
-            graph,
-            startNode,
-            function (node : StateNode) : boolean { // Goal-checking function
-                for (let i = 0; i < interpretation.length; i++) {
-                    var fulfillsAll = true;
-                    for (let j = 0; j < interpretation[i].length; j++) {
-                        if (!interpretationAccepted(interpretation[i][j], node)) {
-                            fulfillsAll = false;
-                        }
-                    }
-                    if (fulfillsAll) {
-                        return true;
-                    }
-                }
-                return false;
-            }, function (node : StateNode) : number { // Heuristics function
-                // Implement plz
-                return 1;
-            },
-            99999);
-
-        return generatePlanFromResult(result, graph);
+        // var graph = new StateGraph();
+        // var startNode = new StateNode();
+        // var result = aStarSearch(
+        //     graph,
+        //     startNode,
+        //     function (node : StateNode) : boolean { // Goal-checking function
+        //         for (let i = 0; i < interpretation.length; i++) {
+        //             var fulfillsAll = true;
+        //             for (let j = 0; j < interpretation[i].length; j++) {
+        //                 if (!interpretationAccepted(interpretation[i][j], node)) {
+        //                     fulfillsAll = false;
+        //                 }
+        //             }
+        //             if (fulfillsAll) {
+        //                 return true;
+        //             }
+        //         }
+        //         return false;
+        //     }, function (node : StateNode) : number { // Heuristics function
+        //         // Implement plz
+        //         return 1;
+        //     },
+        //     99999);
+        //
+        // return generatePlanFromResult(result, graph);
+        return [];
     }
-
-    function generatePlanFromResult (result : SearchResult<StateNode>, graph : StateGraph) : string[] {
-        var plan : string[] = [];
-        for (let i = 0; i < result.path.length-1; i++) {
-            var edges = graph.outgoingEdges(result.path[i]);
-            for (let j = 0; j < edges.length; j++) {
-                if (graph.compareNodes(result.path[i+1], edges[j].to)) {
-                    plan.push(edges[j].action);
-                }
-            }
-        }
-        return plan;
-    }
-
-    function interpretationAccepted (interpretation : Interpreter.Literal, node : StateNode) : boolean {
-        // Mappa funktioner som en galning a'la jonte!
-        // node contains the state to be tested
-        // interpretation contains the Literal to test on
-        if (interpretation.relation) {
-            var objects : string[][] = [];
-            var secondArg : string[][] = [];
-            var tmp : string[] = [];
-            tmp.push(interpretation.args[1]);
-            secondArg.push(tmp);
-            if (interpretation.relation == "leftof") {
-                objects = getObjectsLeftOf(secondArg, node.state);
-            } else if (node.relation == "rightof") {
-                objects = getObjectsRightOf(secondArg, node.state);
-            } else if (node.relation == "inside") {
-                objects = getObjectsInside(secondArg, node.state);
-            } else if (node.relation == "ontop") {
-                objects = getObjectsOntop(secondArg, node.state);
-            } else if (node.realtion == "under") {
-                objects = getObjectsUnder(secondArg, node.state);
-            } else if (node.relation == "beside") {
-                objects = getObjectsBeside(secondArg, node.state);
-            } else if (node.relation == "above") {
-                objects = getObjectsAbove(secondArg, node.state);
-            }
-            if (objects[0].contains(interpretation.args[0])) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return node.state.holding() == interpretation.args[0];
-        }
-    }
+    //
+    // function generatePlanFromResult (result : SearchResult<StateNode>, graph : StateGraph) : string[] {
+    //     var plan : string[] = [];
+    //     for (let i = 0; i < result.path.length-1; i++) {
+    //         var edges = graph.outgoingEdges(result.path[i]);
+    //         for (let j = 0; j < edges.length; j++) {
+    //             if (graph.compareNodes(result.path[i+1], edges[j].to)) {
+    //                 plan.push(edges[j].action);
+    //             }
+    //         }
+    //     }
+    //     return plan;
+    // }
+    //
+    // function interpretationAccepted (interpretation : Interpreter.Literal, node : StateNode) : boolean {
+    //     if (interpretation.args[1]) {
+    //         var objects : string[][] = [];
+    //         var secondArg : string[][] = [];
+    //         var tmp : string[] = [];
+    //         tmp.push(interpretation.args[1]);
+    //         secondArg.push(tmp);
+    //         if (interpretation.relation == "leftof") {
+    //             objects = getObjectsLeftOf(secondArg, node.state);
+    //         } else if (node.relation == "rightof") {
+    //             objects = getObjectsRightOf(secondArg, node.state);
+    //         } else if (node.relation == "inside") {
+    //             objects = getObjectsInside(secondArg, node.state);
+    //         } else if (node.relation == "ontop") {
+    //             objects = getObjectsOntop(secondArg, node.state);
+    //         } else if (node.realtion == "under") {
+    //             objects = getObjectsUnder(secondArg, node.state);
+    //         } else if (node.relation == "beside") {
+    //             objects = getObjectsBeside(secondArg, node.state);
+    //         } else if (node.relation == "above") {
+    //             objects = getObjectsAbove(secondArg, node.state);
+    //         }
+    //         if (objects[0].indexOf(interpretation.args[0]) > -1) {
+    //             return true;
+    //         } else {
+    //             return false;
+    //         }
+    //     } else {
+    //         return node.state.holding == interpretation.args[0];
+    //     }
+    // }
 }
