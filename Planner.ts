@@ -78,54 +78,12 @@ module Planner {
      * be added using the `push` method.
      */
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
-        // // This function returns a dummy plan involving a random stack
-        // do {
-        //     var pickstack = Math.floor(Math.random() * state.stacks.length);
-        // } while (state.stacks[pickstack].length == 0);
-        // var plan : string[] = [];
-        //
-        // // First move the arm to the leftmost nonempty stack
-        // if (pickstack < state.arm) {
-        //     plan.push("Moving left");
-        //     for (var i = state.arm; i > pickstack; i--) {
-        //         plan.push("l");
-        //     }
-        // } else if (pickstack > state.arm) {
-        //     plan.push("Moving right");
-        //     for (var i = state.arm; i < pickstack; i++) {
-        //         plan.push("r");
-        //     }
-        // }
-        //
-        // // Then pick up the object
-        // var obj = state.stacks[pickstack][state.stacks[pickstack].length-1];
-        // plan.push("Picking up the " + state.objects[obj].form,
-        //           "p");
-        //
-        // if (pickstack < state.stacks.length-1) {
-        //     // Then move to the rightmost stack
-        //     plan.push("Moving as far right as possible");
-        //     for (var i = pickstack; i < state.stacks.length-1; i++) {
-        //         plan.push("r");
-        //     }
-        //
-        //     // Then move back
-        //     plan.push("Moving back");
-        //     for (var i = state.stacks.length-1; i > pickstack; i--) {
-        //         plan.push("l");
-        //     }
-        // }
-        //
-        // // Finally put it down again
-        // plan.push("Dropping the " + state.objects[obj].form,
-        //           "d");
-
-        var graph = generateGraph(state);
-        var startNode = new Node();
+        var graph = new StateGraph();
+        var startNode = new StateNode();
         var result = aStarSearch(
             graph,
             startNode,
-            function (node : Node) : boolean { // Goal-checking function
+            function (node : StateNode) : boolean { // Goal-checking function
                 for (let i = 0; i < interpretation.length; i++) {
                     var fulfillsAll = true;
                     for (let j = 0; j < interpretation[i].length; j++) {
@@ -138,40 +96,60 @@ module Planner {
                     }
                 }
                 return false;
-            }, function (node : Node) : number { // Heuristics function
+            }, function (node : StateNode) : number { // Heuristics function
                 // Implement plz
-                return null;
+                return 1;
             },
             99999);
 
-        return generatePlanFromResult(result);
+        return generatePlanFromResult(result, graph);
     }
 
-    function generateGraph (state : WorldState) : Graph<Node> {
-        return generateGraphHelper(state, new collections.Set<Node>());
+    function generatePlanFromResult (result : SearchResult<StateNode>, graph : StateGraph) : string[] {
+        var plan : string[] = [];
+        for (let i = 0; i < result.path.length-1; i++) {
+            var edges = graph.outgoingEdges(result.path[i]);
+            for (let j = 0; j < edges.length; j++) {
+                if (graph.compareNodes(result.path[i+1], edges[j].to)) {
+                    plan.push(edges[j].action);
+                }
+            }
+        }
+        return plan;
     }
 
-    function generateGraphHelper (state: WorldState, visited : collections.Set<Node>) : Graph<Node> {
-        // Create a node from my current state
-        // if (visited.contains(node)) {
-        //     return self (base case)
-        // } else {
-        //     visited.add(node);
-        //     Create edges to new nodes which will recursively be defined (if not already in set)
-        // }
-
-        return null;
-    }
-
-    function generatePlanFromResult (result : SearchResult<Node>) : string[] {
-        // Iterate through result, for every node take the edge between them and store the char representing the action
-        return [];
-    }
-
-    function interpretationAccepted (interpretation : Interpreter.Literal, node : Node) : boolean {
+    function interpretationAccepted (interpretation : Interpreter.Literal, node : StateNode) : boolean {
+        // Mappa funktioner som en galning a'la jonte!
         // node contains the state to be tested
         // interpretation contains the Literal to test on
-        return false;
+        if (interpretation.relation) {
+            var objects : string[][] = [];
+            var secondArg : string[][] = [];
+            var tmp : string[] = [];
+            tmp.push(interpretation.args[1]);
+            secondArg.push(tmp);
+            if (interpretation.relation == "leftof") {
+                objects = getObjectsLeftOf(secondArg, node.state);
+            } else if (node.relation == "rightof") {
+                objects = getObjectsRightOf(secondArg, node.state);
+            } else if (node.relation == "inside") {
+                objects = getObjectsInside(secondArg, node.state);
+            } else if (node.relation == "ontop") {
+                objects = getObjectsOntop(secondArg, node.state);
+            } else if (node.realtion == "under") {
+                objects = getObjectsUnder(secondArg, node.state);
+            } else if (node.relation == "beside") {
+                objects = getObjectsBeside(secondArg, node.state);
+            } else if (node.relation == "above") {
+                objects = getObjectsAbove(secondArg, node.state);
+            }
+            if (objects[0].contains(interpretation.args[0])) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return node.state.holding() == interpretation.args[0];
+        }
     }
-
 }

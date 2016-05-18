@@ -107,15 +107,15 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-      //Maps a relation to a the phsyics function correlating
-      var physicFuncionsMap = new collections.Dictionary<string, Function>();
-      physicFuncionsMap.setValue('inside', checkOnTopOf);
-      physicFuncionsMap.setValue('above', checkAbove);
-      physicFuncionsMap.setValue('under', checkUnder);
-      physicFuncionsMap.setValue('leftof', checkLeftOf);
-      physicFuncionsMap.setValue('rightof', checkRightOf);
-      physicFuncionsMap.setValue('beside', checkBeside);
-      physicFuncionsMap.setValue('ontop', checkOnTopOf);
+        //Maps a relation to a the phsyics function correlating
+        var physicFuncionsMap = new collections.Dictionary<string, Function>();
+        physicFuncionsMap.setValue('inside', checkOnTopOf);
+        physicFuncionsMap.setValue('above', checkAbove);
+        physicFuncionsMap.setValue('under', checkUnder);
+        physicFuncionsMap.setValue('leftof', checkLeftOf);
+        physicFuncionsMap.setValue('rightof', checkRightOf);
+        physicFuncionsMap.setValue('beside', checkBeside);
+        physicFuncionsMap.setValue('ontop', checkOnTopOf);
 
         removeObjectsNotInStacks(state);
 

@@ -14,7 +14,6 @@ var Interpreter;
             }
         });
         if (interpretations.length) {
-            console.log(interpretations);
             return interpretations;
         }
         else {
@@ -33,6 +32,14 @@ var Interpreter;
     }
     Interpreter.stringifyLiteral = stringifyLiteral;
     function interpretCommand(cmd, state) {
+        var physicFuncionsMap = new collections.Dictionary();
+        physicFuncionsMap.setValue('inside', checkOnTopOf);
+        physicFuncionsMap.setValue('above', checkAbove);
+        physicFuncionsMap.setValue('under', checkUnder);
+        physicFuncionsMap.setValue('leftof', checkLeftOf);
+        physicFuncionsMap.setValue('rightof', checkRightOf);
+        physicFuncionsMap.setValue('beside', checkBeside);
+        physicFuncionsMap.setValue('ontop', checkOnTopOf);
         removeObjectsNotInStacks(state);
         var entityObjects = getNodeObjects(cmd.entity.object, state);
         var interpretation = [];
@@ -42,40 +49,8 @@ var Interpreter;
                 for (var j = 0; j < locationObjects[i].length; j++) {
                     for (var k = 0; k < entityObjects.length; k++) {
                         for (var l = 0; l < entityObjects[k].length; l++) {
-                            if (cmd.location.relation == 'inside') {
-                                if (checkOnTopOf(entityObjects[k][l], locationObjects[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "inside", args: [entityObjects[k][l], locationObjects[i][j]] }]);
-                                }
-                            }
-                            if (cmd.location.relation == 'above') {
-                                if (checkAbove(entityObjects[k][l], locationObjects[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "above", args: [entityObjects[k][l], locationObjects[i][j]] }]);
-                                }
-                            }
-                            if (cmd.location.relation == 'under') {
-                                if (checkUnder(entityObjects[k][l], locationObjects[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "under", args: [entityObjects[k][l], locationObjects[i][j]] }]);
-                                }
-                            }
-                            if (cmd.location.relation == 'leftof') {
-                                if (checkLeftOf(entityObjects[k][l], locationObjects[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "leftof", args: [entityObjects[k][l], locationObjects[i][j]] }]);
-                                }
-                            }
-                            if (cmd.location.relation == 'rightof') {
-                                if (checkRightOf(entityObjects[k][l], locationObjects[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "rightof", args: [entityObjects[k][l], locationObjects[i][j]] }]);
-                                }
-                            }
-                            if (cmd.location.relation == 'beside') {
-                                if (checkBeside(entityObjects[k][l], locationObjects[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "beside", args: [entityObjects[k][l], locationObjects[i][j]] }]);
-                                }
-                            }
-                            if (cmd.location.relation == 'ontop') {
-                                if (checkOnTopOf(entityObjects[k][l], locationObjects[i][j], state)) {
-                                    interpretation.push([{ polarity: true, relation: "ontop", args: [entityObjects[k][l], locationObjects[i][j]] }]);
-                                }
+                            if (physicFuncionsMap.getValue(cmd.location.relation)(entityObjects[k][l], locationObjects[i][j], state)) {
+                                interpretation.push([{ polarity: true, relation: cmd.location.relation, args: [entityObjects[k][l], locationObjects[i][j]] }]);
                             }
                         }
                     }
@@ -105,7 +80,7 @@ var Interpreter;
         }
         return interpretation;
     }
-    function checkOnTopOf(object1, object2, state) {
+    var checkOnTopOf = function (object1, object2, state) {
         if (object2 == undefined || object1 == undefined) {
             return false;
         }
@@ -130,27 +105,30 @@ var Interpreter;
             }
         }
         return true;
-    }
-    function checkAbove(object1, object2, state) {
+    };
+    var checkAbove = function (object1, object2, state) {
         for (var i = 0; i < state.stacks.length; i++) {
             if (state.stacks[i].indexOf(object2) != -1) {
                 return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length - 1], state);
             }
         }
-        return checkOnTopOf(object1, object2, state);
-    }
-    function checkUnder(object1, object2, state) {
+        return false;
+    };
+    var checkUnder = function (object1, object2, state) {
+        if (state.objects[object2].form == 'ball') {
+            return false;
+        }
         return checkAbove(object2, object1, state);
-    }
-    function checkBeside(object1, object2, state) {
-        return true;
-    }
-    function checkLeftOf(object1, object2, state) {
+    };
+    var checkBeside = function (object1, object2, state) {
         return object1 != object2;
-    }
-    function checkRightOf(object1, object2, state) {
-        return !(state.stacks[state.stacks.length].indexOf(object2));
-    }
+    };
+    var checkLeftOf = function (object1, object2, state) {
+        return !(state.stacks[0].indexOf(object2) > -1) && object1 != object2;
+    };
+    var checkRightOf = function (object1, object2, state) {
+        return !(state.stacks[state.stacks.length].indexOf(object2) > -1) && object1 != object2;
+    };
     function findObject(object, state) {
         var tmp = [];
         if (object.form == 'floor') {
@@ -426,7 +404,6 @@ var Interpreter;
             }
         }
         else if (node.quantifier == "any") {
-            console.log("- any/the");
             var tmp = [];
             for (var i = 0; i < entity.length; i++) {
                 for (var j = 0; j < entity[i].length; j++) {
@@ -438,7 +415,6 @@ var Interpreter;
             return tmp;
         }
         else if (node.quantifier == "all") {
-            console.log("- all");
             return entity;
         }
         return [];
