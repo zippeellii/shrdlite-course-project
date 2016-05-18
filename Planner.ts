@@ -120,30 +120,58 @@ module Planner {
         // plan.push("Dropping the " + state.objects[obj].form,
         //           "d");
 
-        var plan : string[] = [];
+        var graph = generateGraph(state);
+        var startNode = new Node();
+        var result = aStarSearch(
+            graph,
+            startNode,
+            function (node : Node) : boolean { // Goal-checking function
+                for (let i = 0; i < interpretation.length; i++) {
+                    var fulfillsAll = true;
+                    for (let j = 0; j < interpretation[i].length; j++) {
+                        if (!interpretationAccepted(interpretation[i][j], node)) {
+                            fulfillsAll = false;
+                        }
+                    }
+                    if (fulfillsAll) {
+                        return true;
+                    }
+                }
+                return false;
+            }, function (node : Node) : number { // Heuristics function
+                // Implement plz
+                return null;
+            },
+            99999);
 
-        return plan;
-    }
-
-    function goalCheck (node : Node) : boolean {
-        // goal : (n:Node) => boolean,
-        // Interpreter indata:
-        // Command, fromCollection, toCollection
-        return false;
-    }
-
-    function heuristic (node : Node) : number {
-        // heuristics : (n:Node) => number,
-        return 0;
+        return generatePlanFromResult(result);
     }
 
     function generateGraph (state : WorldState) : Graph<Node> {
-        // graph : Graph<Node>,
-        return null;
+        return generateGraphHelper(state, new collections.Set<Node>());
     }
 
     function generateGraphHelper (state: WorldState, visited : collections.Set<Node>) : Graph<Node> {
+        // Create a node from my current state
+        // if (visited.contains(node)) {
+        //     return self (base case)
+        // } else {
+        //     visited.add(node);
+        //     Create edges to new nodes which will recursively be defined (if not already in set)
+        // }
+
         return null;
+    }
+
+    function generatePlanFromResult (result : SearchResult<Node>) : string[] {
+        // Iterate through result, for every node take the edge between them and store the char representing the action
+        return [];
+    }
+
+    function interpretationAccepted (interpretation : Interpreter.Literal, node : Node) : boolean {
+        // node contains the state to be tested
+        // interpretation contains the Literal to test on
+        return false;
     }
 
 }

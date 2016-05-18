@@ -29,19 +29,36 @@ var Planner;
     }
     Planner.stringify = stringify;
     function planInterpretation(interpretation, state) {
-        var plan = [];
-        return plan;
-    }
-    function goalCheck(node) {
-        return false;
-    }
-    function heuristic(node) {
-        return 0;
+        var graph = generateGraph(state);
+        var startNode = new Node();
+        var result = aStarSearch(graph, startNode, function (node) {
+            for (var i = 0; i < interpretation.length; i++) {
+                var fulfillsAll = true;
+                for (var j = 0; j < interpretation[i].length; j++) {
+                    if (!interpretationAccepted(interpretation[i][j], node)) {
+                        fulfillsAll = false;
+                    }
+                }
+                if (fulfillsAll) {
+                    return true;
+                }
+            }
+            return false;
+        }, function (node) {
+            return null;
+        }, 99999);
+        return generatePlanFromResult(result);
     }
     function generateGraph(state) {
-        return null;
+        return generateGraphHelper(state, new collections.Set());
     }
     function generateGraphHelper(state, visited) {
         return null;
+    }
+    function generatePlanFromResult(result) {
+        return [];
+    }
+    function interpretationAccepted(interpretation, node) {
+        return false;
     }
 })(Planner || (Planner = {}));
