@@ -1,6 +1,7 @@
 ///<reference path="World.ts"/>
 ///<reference path="Interpreter.ts"/>
 ///<reference path="Graph.ts"/>
+///<reference path="StateGraph.ts"/>
 ///<reference path="RelationFunctions.ts"/>
 ///<reference path="lib/collections.ts"/>
 ///<reference path="lib/node.d.ts"/>
@@ -79,32 +80,11 @@ module Planner {
      * be added using the `push` method.
      */
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
-        // var graph = new StateGraph();
-        // var startNode = new StateNode();
-        // var result = aStarSearch(
-        //     graph,
-        //     startNode,
-        //     function (node : StateNode) : boolean { // Goal-checking function
-        //         for (let i = 0; i < interpretation.length; i++) {
-        //             var fulfillsAll = true;
-        //             for (let j = 0; j < interpretation[i].length; j++) {
-        //                 if (!interpretationAccepted(interpretation[i][j], node)) {
-        //                     fulfillsAll = false;
-        //                 }
-        //             }
-        //             if (fulfillsAll) {
-        //                 return true;
-        //             }
-        //         }
-        //         return false;
-        //     }, function (node : StateNode) : number { // Heuristics function
-        //         // Implement plz
-        //         return 1;
-        //     },
-        //     99999);
-        //
+      console.log('PLanning start');
+
         var graph = new StateGraph();
         var startNode = new StateNode(state);
+        console.log(state);
         var isGoal = function (node : StateNode) : boolean { // Goal-checking function
             for (let i = 0; i < interpretation.length; i++) {
                 var fulfillsAll = true;
@@ -117,24 +97,27 @@ module Planner {
                     return true;
                 }
             }
+            return false;
           };
           var heuristic = function (node : StateNode) : number { // Heuristics function
               // Implement plz
-              return null;
+              return 0;
           };
-
         var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10);
-
-        return generatePlanFromResult(result, graph);
+        console.log('Got path: ' + result.path);
+        return generatePlanFromResult(startNode, result, graph);
     }
 
-    function generatePlanFromResult (result : SearchResult<StateNode>, graph : StateGraph) : string[] {
+    function generatePlanFromResult (startNode : StateNode, result : SearchResult<StateNode>, graph : StateGraph) : string[] {
+      console.log('-----------------Generate plan from result starts here -------------------');
         var plan : string[] = [];
-        for (let i = 0; i < result.path.length-1; i++) {
+        result.path.unshift(startNode);
+        for (let i = 0; i < result.path.length; i++) {
             var edges = graph.outgoingEdges(result.path[i]);
+            var pathNode = result.path[i+1];
             for (let j = 0; j < edges.length; j++) {
-                if (graph.compareNodes(result.path[i+1], edges[j].to)) {
-                    //plan.push(edges[j].action);
+                if (graph.compareNodes(pathNode, edges[j].to)  == 0) {
+                    plan.push(edges[j].action);
                 }
             }
         }
@@ -163,7 +146,7 @@ module Planner {
             } else if (interpretation.relation == "above") {
                 objects = getObjectsAbove(secondArg, node.state);
             }
-            if (objects[0].indexOf(interpretation.args[0]) > -1) {
+            if (objects[0] && objects[0].indexOf(interpretation.args[0]) > -1) {
                 return true;
             } else {
                 return false;

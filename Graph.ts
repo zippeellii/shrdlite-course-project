@@ -83,7 +83,10 @@ function aStarSearch<Node> (
     //Whenever there is a new node to visit, do it
     while (!nextToVisit.isEmpty()){
       var currentNode = nextToVisit.dequeue();
+      console.log('Processing node: ' + currentNode);
+      console.log(currentNode);
       if(goal(currentNode)){
+        console.log('Found the goal');
         var pathNode = currentNode;
         var path = new Array();
         //Find the entire path
@@ -97,11 +100,14 @@ function aStarSearch<Node> (
             path: path,
             cost: gCost.getValue(currentNode)
         };
+        console.log('Result from aStar in aStar: ' + result);
         return result;
 
       }
       processed.add(currentNode);
+      console.log('Getting the edges');
       var edges = graph.outgoingEdges(currentNode);
+      console.log('Got the edges');
       for(var edge of edges){
         if(processed.contains(edge.to)) continue;
 
