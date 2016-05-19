@@ -93,7 +93,8 @@ class StateGraph implements Graph<StateNode> {
         edges.push(edge);
       }
       //Arm is holding, i.e can drop
-      if(state.holding && checkOnTopOf(state.holding, state.stacks[state.arm][state.stacks[state.arm].length-1], state)){
+      if(state.holding && checkOnTopOf(state.holding, state.stacks[state.arm][state.stacks[state.arm].length-1] ?
+        state.stacks[state.arm][state.stacks[state.arm].length-1]: 'floor' , state)){
         var stateCpy : WorldState = {stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined};
         for(var i = 0; i < state.stacks.length; i++){
           stateCpy.stacks.push(state.stacks[i].slice());
