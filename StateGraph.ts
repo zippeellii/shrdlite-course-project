@@ -1,4 +1,5 @@
 ///<reference path="Graph.ts"/>
+///<reference path="RelationFunctions.ts"/>
 
 //Graph for states in shrdlite, neighbors are the state after making actions
 //d - drop, l - left, r - right, p - pick up
@@ -92,7 +93,7 @@ class StateGraph implements Graph<StateNode> {
         edges.push(edge);
       }
       //Arm is holding, i.e can drop
-      if(state.holding){
+      if(state.holding && checkOnTopOf(state.holding, state.stacks[state.arm][state.stacks[state.arm].length-1], state)){
         var stateCpy : WorldState = {stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined};
         for(var i = 0; i < state.stacks.length; i++){
           stateCpy.stacks.push(state.stacks[i].slice());
