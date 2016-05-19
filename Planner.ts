@@ -45,6 +45,7 @@ module Planner {
         if (plans.length) {
             return plans;
         } else {
+          console.log('Throwing error');
             // only throw the first error found
             throw errors[0];
         }
@@ -80,11 +81,10 @@ module Planner {
      * be added using the `push` method.
      */
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
-      console.log('PLanning start');
 
         var graph = new StateGraph();
         var startNode = new StateNode(state);
-        console.log(state);
+        console.log('Start state: ' + startNode);
         var isGoal = function (node : StateNode) : boolean { // Goal-checking function
             for (let i = 0; i < interpretation.length; i++) {
                 var fulfillsAll = true;
@@ -104,12 +104,10 @@ module Planner {
               return 0;
           };
         var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10);
-        console.log('Got path: ' + result.path);
         return generatePlanFromResult(startNode, result, graph);
     }
 
     function generatePlanFromResult (startNode : StateNode, result : SearchResult<StateNode>, graph : StateGraph) : string[] {
-      console.log('-----------------Generate plan from result starts here -------------------');
         var plan : string[] = [];
         result.path.unshift(startNode);
         for (let i = 0; i < result.path.length; i++) {

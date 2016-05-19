@@ -292,7 +292,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         for(var obj in state.objects){
           objectExists = false;
           for(var id in state.stacks){
-            if(state.stacks[id].indexOf(obj) > -1){
+            if(state.stacks[id].indexOf(obj) > -1 || state.holding == obj){
               objectExists = true;
             }
           }

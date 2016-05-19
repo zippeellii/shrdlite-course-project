@@ -57,7 +57,6 @@ class StateGraph implements Graph<StateNode> {
 
       //Can go left
       if(state.arm > 0) {
-        console.log('Go to the left');
         var stateCpy : WorldState = {stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined};
         for(var i = 0; i < state.stacks.length; i++){
           stateCpy.stacks.push(state.stacks[i].slice());
@@ -84,7 +83,6 @@ class StateGraph implements Graph<StateNode> {
         stateCpy.arm = state.arm;
         stateCpy.objects = state.objects;
         stateCpy.examples = state.examples;
-        console.log('Can move arm to right');
         var edge : StateEdge<StateNode> = new StateEdge<StateNode>();
         edge.from = node;
         stateCpy.arm++;
@@ -95,7 +93,6 @@ class StateGraph implements Graph<StateNode> {
       }
       //Arm is holding, i.e can drop
       if(state.holding){
-        console.log('Can drop');
         var stateCpy : WorldState = {stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined};
         for(var i = 0; i < state.stacks.length; i++){
           stateCpy.stacks.push(state.stacks[i].slice());
@@ -125,7 +122,6 @@ class StateGraph implements Graph<StateNode> {
         stateCpy.arm = state.arm;
         stateCpy.objects = state.objects;
         stateCpy.examples = state.examples;
-        console.log('Can pick up');
         var edge : StateEdge<StateNode> = new StateEdge<StateNode>();
         edge.from = node;
         stateCpy.holding = stateCpy.stacks[stateCpy.arm][stateCpy.stacks[stateCpy.arm].length-1];
@@ -136,7 +132,6 @@ class StateGraph implements Graph<StateNode> {
         edges.push(edge);
 
       }
-      console.log('Edges pushed: ' + edges);
         return edges
     }
 
@@ -144,7 +139,6 @@ class StateGraph implements Graph<StateNode> {
       if(a == undefined || b == undefined){
         return 1;
       }
-        console.log('GOING to compare');
         return a.compareTo(b);
     }
 
