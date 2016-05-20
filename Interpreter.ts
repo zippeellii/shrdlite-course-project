@@ -250,7 +250,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             if (entity.length == 1 && entity[0].length == 1) {
                 return entity;
             } else {
-                return [];
+                throw Error('Need to specify the');
             }
         } else if (node.quantifier == "any") {
             // Returns first value from collection

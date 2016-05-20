@@ -291,5 +291,5 @@ var checkLeftOf = function(object1 : string, object2 : string, state : WorldStat
 }
 //Check that object1 can be right of object2
 var checkRightOf = function(object1 : string, object2 : string, state : WorldState) : boolean{
-  return !(state.stacks[state.stacks.length].indexOf(object2) > -1) && object1 != object2;
+  return !(state.stacks[state.stacks.length-1].indexOf(object2) > -1) && object1 != object2;
 }
