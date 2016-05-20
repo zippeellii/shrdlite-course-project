@@ -251,10 +251,26 @@ var checkOnTopOf = function (object1 : string, object2 : string, state : WorldSt
   if(objects[object1].size == 'large' && objects[object2].size == 'small'){
     return false;
   }
+
+
   // A box cannot contain pyrmamids, planks or boxes of the same size
   if(objects[object2].form == 'box'){
     if(objects[object1].form == 'pyramid' || objects[object1].form == 'plank' || objects[object1].form == 'box'){
-      if(objects[object2].size == 'large' && objects[object2].size == 'large' || objects[object2].size == 'small'){
+      if((objects[object1].size == 'large' && objects[object2].size == 'large') || objects[object2].size == 'small'){
+        return false;
+      }
+    }
+  }
+  if(objects[object1].form == 'box'){
+    if(objects[object1].size == 'small'){
+      //Small boxes cannot be supported by small bricks or pyramids
+      if((objects[object2].form == 'pyramid' || objects[object2].form == 'brick') && objects[object2].size == 'small'){
+        return false;
+      }
+    }
+    else if(objects[object1].size == 'large'){
+      //Large boxes cannot be supported by large pyramids
+      if(objects[object2].form == 'pyramid' && objects[object2].size == 'large'){
         return false;
       }
     }
