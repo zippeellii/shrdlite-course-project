@@ -122,6 +122,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         var entityObjects = getNodeObjects(cmd.entity.object, state);
         var interpretation : DNFFormula = [];
+        if(cmd.entity.quantifier == 'the'){
+          //If the quantifier is used but more than one object is found
+          if(entityObjects.length != 1 || entityObjects[0].length != 1){
+            throw new Error('You need to be more specifc, multiple objects correspond to "the"');
+          }
+        }
 
         if (cmd.location) {
           var locationObjects = getNodeObjects(cmd.location.entity, state);
