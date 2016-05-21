@@ -97,6 +97,7 @@ function getObjectsOntop(entity : string[][], state : WorldState) : string[][] {
     // Returns objects directly on top of entity (will not work for more than one entity)
 
     var tmp : string[][] = [];
+    var tmp2 : string[][] = [];
 
     for (let k = 0; k < entity.length; k++) {
         var innerTmp : string[] = [];
@@ -119,7 +120,8 @@ function getObjectsOntop(entity : string[][], state : WorldState) : string[][] {
           }
         }
         if (innerTmp.length > 0) {
-            tmp.push(innerTmp);
+            tmp.push(innerTmp.slice());
+            tmp2.push(innerTmp.slice());
         }
     }
     return tmp;
@@ -230,7 +232,6 @@ function getObjectsAbove(entity : string[][], state : WorldState) : string[][] {
 
 //****Functions for checking physical laws****
 //Check that object1 can be on top of object 2
-//TODO: Need to implement pyramid etc.
 var checkOnTopOf = function (object1 : string, object2 : string, state : WorldState) : boolean {
   if (object2 == undefined || object1 == undefined) {
       return false;
@@ -279,13 +280,7 @@ var checkOnTopOf = function (object1 : string, object2 : string, state : WorldSt
 }
 //Check that object1 can be above object2
 var checkAbove = function(object1 : string, object2 : string, state : WorldState) : boolean{
-  for(let i = 0; i < state.stacks.length; i++){
-    if(state.stacks[i].indexOf(object2) != -1){
-      return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length-1], state);
-    }
-  }
-  //No stack contained object2
-  return false;
+      return checkOnTopOf(object1, object2, state);
 }
 //Check that object1 can be under object2
 var checkUnder = function(object1 : string, object2 : string, state : WorldState) : boolean{

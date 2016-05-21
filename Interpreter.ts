@@ -109,60 +109,56 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
         //Maps a relation to a the phsyics function correlating
-        var physicFuncionsMap = new collections.Dictionary<string, Function>();
-        physicFuncionsMap.setValue('inside', checkOnTopOf);
-        physicFuncionsMap.setValue('above', checkAbove);
-        physicFuncionsMap.setValue('under', checkUnder);
-        physicFuncionsMap.setValue('leftof', checkLeftOf);
-        physicFuncionsMap.setValue('rightof', checkRightOf);
-        physicFuncionsMap.setValue('beside', checkBeside);
-        physicFuncionsMap.setValue('ontop', checkOnTopOf);
+        var physicFunctionsMap = new collections.Dictionary<string, Function>();
+        physicFunctionsMap.setValue('inside', checkOnTopOf);
+        physicFunctionsMap.setValue('above', checkAbove);
+        physicFunctionsMap.setValue('under', checkUnder);
+        physicFunctionsMap.setValue('leftof', checkLeftOf);
+        physicFunctionsMap.setValue('rightof', checkRightOf);
+        physicFunctionsMap.setValue('beside', checkBeside);
+        physicFunctionsMap.setValue('ontop', checkOnTopOf);
 
         removeObjectsNotInStacks(state);
 
-        var entityObjects = getNodeObjects(cmd.entity.object, state);
+        var entityObjects = getNodeObjects(cmd.entity, state);
         var interpretation : DNFFormula = [];
-        if(cmd.entity.quantifier == 'the'){
-          //If the quantifier is used but more than one object is found
-          if(entityObjects.length != 1 || entityObjects[0].length != 1){
-            throw new Error('You need to be more specifc, multiple objects correspond to "the"');
-          }
-        }
-
+        //If there exists a location of where to put the object(s)
         if (cmd.location) {
           var locationObjects = getNodeObjects(cmd.location.entity, state);
           for(var i = 0; i < locationObjects.length; i++){
             for(var j = 0; j < locationObjects[i].length; j++){
               for(var k = 0; k < entityObjects.length; k++){
+                var conjCommands : Literal[] = [];
+                var isPossible = true;
                 for(var l = 0; l < entityObjects[k].length; l++){
-                  if(physicFuncionsMap.getValue(cmd.location.relation)(entityObjects[k][l], locationObjects[i][j], state)){
-                    interpretation.push([{polarity: true, relation: cmd.location.relation, args: [entityObjects[k][l], locationObjects[i][j]]}]);
+                  if(physicFunctionsMap.getValue(cmd.location.relation)(entityObjects[k][l], locationObjects[i][j], state)){
+                    conjCommands.push({polarity: true, relation: cmd.location.relation, args: [entityObjects[k][l], locationObjects[i][j]]});
                   }
+                  else{
+                    isPossible = false;
+                  }
+                }
+                //If conjunction of commands exist, push it
+                if(conjCommands.length != 0 && isPossible){
+                  interpretation.push(conjCommands);
                 }
               }
             }
           }
         }
         else{
-          if(cmd.entity.quantifier == 'any'){
-            for(var i = 0; i < entityObjects.length; i++){
-              for(var j = 0; j < entityObjects[i].length; j++){
-                interpretation.push([{polarity: true, relation: "holding", args: [entityObjects[i][j]]}]);
-              }
-            }
+          if(entityObjects.length > 1 || entityObjects[0].length > 1){
+            throw new Error('Cannot hold more than one object');
           }
-          else{
-            for(var i = 0; i < entityObjects.length; i++){
-              var conjCommands : Literal[] = [];
-              for(var j = 0; j < entityObjects[i].length; j++){
-                conjCommands.push({polarity: true, relation: "holding", args: [entityObjects[i][j]]});
-              }
-              interpretation.push(conjCommands);
+          //No location, must be "holding" relation
+          for(var i = 0; i < entityObjects.length; i++){
+            for(var j = 0; j < entityObjects[i].length; j++){
+              interpretation.push([{polarity: true, relation: "holding", args: [entityObjects[i][j]]}]);
             }
           }
         }
         if(interpretation.length == 0){
-          throw new Error('No intepretation found');
+          throw new Error('Physically impossible');
         }
         return interpretation;
     }
@@ -253,11 +249,22 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     function getEntityObjects(node : any, state : WorldState) : string[][] {
         var entity = getNodeObjects(node.object, state);
         if (node.quantifier == "the") {
-            if (entity.length == 1 && entity[0].length == 1) {
-                return entity;
-            } else {
-                throw Error('Need to specify the');
+          if(entity.length > 1){
+            var tmpValue = entity[0][0];
+            for(let i = 1; i < entity.length; i++){
+              if(entity[i].length > 1 || entity[i][0] != tmpValue){
+                throw new Error('Cannot find a specific object for THE request');
+              }
+              else{
+                entity.splice(i,1);
+              }
             }
+          }
+          if (entity.length == 1 && entity[0].length == 1) {
+              return entity;
+          } else {
+              throw Error('Need to specify the');
+          }
         } else if (node.quantifier == "any") {
             // Returns first value from collection
             var tmp : string[][] = [];
@@ -282,14 +289,21 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var objects = getNodeObjects(node.object, state);
         var concatObjects : string[] = Array.prototype.concat.apply([], objects);
         var location = getNodeObjects(node.location, state);
+
+        var intersectionObjects : string[][] = [];
+
         for(let i = 0; i < location.length; i++){
+            var innerIntersection : string[] = [];
             for(let j = 0; j < location[i].length; j++){
-                if(concatObjects.indexOf(location[i][j]) == -1){
-                    location[i].splice(j, 1);
+                if(concatObjects.indexOf(location[i][j]) > -1){
+                    innerIntersection.push(location[i][j]);
                 }
             }
+            if (innerIntersection.length > 0) {
+                intersectionObjects.push(innerIntersection);
+            }
         }
-        return location;
+        return intersectionObjects;
     }
 
     function removeObjectsNotInStacks(state : WorldState) {
