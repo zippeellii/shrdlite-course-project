@@ -280,20 +280,23 @@ var checkOnTopOf = function (object1 : string, object2 : string, state : WorldSt
 }
 //Check that object1 can be above object2
 var checkAbove = function(object1 : string, object2 : string, state : WorldState) : boolean{
-  if(object2 === 'floor'){
+  if(object1 === 'floor'){
     return false;
   }
-  return checkOnTopOf(object1, object2, state);
-}
-//Check that object1 can be under object2
-var checkUnder = function(object1 : string, object2 : string, state : WorldState) : boolean{
-  if(object1 === 'floor') {
+  if (object2 === 'floor') {
+    return true;
+  }
+  if (state.objects[object1].size === 'large' && state.objects[object1].size === 'small') {
     return false;
   }
-  //A ball cannot be under antyhing
+  //Nothing can be above a ball
   if(state.objects[object2].form == 'ball'){
     return false;
   }
+  return true;
+}
+//Check that object1 can be under object2
+var checkUnder = function(object1 : string, object2 : string, state : WorldState) : boolean{
   //If one can exist under the other is above
   return checkAbove(object2, object1, state);
 }
@@ -309,7 +312,7 @@ var checkLeftOf = function(object1 : string, object2 : string, state : WorldStat
   if(object2 === 'floor' || object1 == 'floor') {
     return false;
   }
-  return !(state.stacks[0].indexOf(object2) > -1) && object1 != object2;
+  return object1 != object2;
 
 }
 //Check that object1 can be right of object2
@@ -317,5 +320,5 @@ var checkRightOf = function(object1 : string, object2 : string, state : WorldSta
   if(object2 === 'floor' || object1 == 'floor') {
     return false;
   }
-  return !(state.stacks[state.stacks.length-1].indexOf(object2) > -1) && object1 != object2;
+  return object1 != object2;
 }

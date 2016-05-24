@@ -103,7 +103,7 @@ module Planner {
               // Implement plz
               return 0;
           };
-        var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10);
+        var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 1000);
         return generatePlanFromResult(startNode, result, graph);
     }
 

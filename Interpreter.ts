@@ -153,18 +153,17 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           }
         }
         else{
-          if(entityObjects.length > 1 || entityObjects[0].length > 1){
-            throw new Error('Cannot hold more than one object');
-          }
           //No location, must be "holding" relation
-          for(var i = 0; i < entityObjects.length; i++){
-            for(var j = 0; j < entityObjects[i].length; j++){
-              interpretation.push([{polarity: true, relation: "holding", args: [entityObjects[i][j]]}]);
+          for(var i = 0; i < entityObjects.length; i++) {
+            if (entityObjects[i].length === 1) {
+              for(var j = 0; j < entityObjects[i].length; j++) {
+                interpretation.push([{polarity: true, relation: "holding", args: [entityObjects[i][j]]}]);
+              }
             }
           }
         }
         if(interpretation.length == 0){
-          throw new Error('Physically impossible');
+          throw ('Physically impossible');
         }
         return interpretation;
     }
@@ -259,7 +258,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             var tmpValue = entity[0][0];
             for(let i = 1; i < entity.length; i++){
               if(entity[i].length > 1 || entity[i][0] != tmpValue){
-                throw new Error('Cannot find a specific object for THE request');
+                throw ('Cannot find a specific object for THE request');
               }
               else{
                 entity.splice(i,1);
@@ -269,7 +268,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           if (entity.length == 1 && entity[0].length == 1) {
               return entity;
           } else {
-              throw Error('Need to specify the');
+              throw ('Need to specify the');
           }
         } else if (node.quantifier == "any") {
             // Returns first value from collection

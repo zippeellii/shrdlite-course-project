@@ -82,6 +82,7 @@ function getObjectsInside(entity, state) {
 }
 function getObjectsOntop(entity, state) {
     var tmp = [];
+    var tmp2 = [];
     for (var k = 0; k < entity.length; k++) {
         var innerTmp = [];
         if (entity[k].length != 1) {
@@ -104,7 +105,8 @@ function getObjectsOntop(entity, state) {
             }
         }
         if (innerTmp.length > 0) {
-            tmp.push(innerTmp);
+            tmp.push(innerTmp.slice());
+            tmp2.push(innerTmp.slice());
         }
     }
     return tmp;
@@ -191,7 +193,7 @@ function getObjectsAbove(entity, state) {
     return tmp;
 }
 var checkOnTopOf = function (object1, object2, state) {
-    if (object2 == undefined || object1 == undefined) {
+    if (object2 === undefined || object1 === undefined || object1 === 'floor') {
         return false;
     }
     var objects = state.objects;
@@ -229,25 +231,35 @@ var checkOnTopOf = function (object1, object2, state) {
     return true;
 };
 var checkAbove = function (object1, object2, state) {
-    for (var i = 0; i < state.stacks.length; i++) {
-        if (state.stacks[i].indexOf(object2) != -1) {
-            return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length - 1], state);
-        }
+    if (object2 === 'floor') {
+        return false;
     }
-    return false;
+    return checkOnTopOf(object1, object2, state);
 };
 var checkUnder = function (object1, object2, state) {
+    if (object1 === 'floor') {
+        return false;
+    }
     if (state.objects[object2].form == 'ball') {
         return false;
     }
     return checkAbove(object2, object1, state);
 };
 var checkBeside = function (object1, object2, state) {
+    if (object2 === 'floor' || object1 == 'floor') {
+        return false;
+    }
     return object1 != object2;
 };
 var checkLeftOf = function (object1, object2, state) {
+    if (object2 === 'floor' || object1 == 'floor') {
+        return false;
+    }
     return !(state.stacks[0].indexOf(object2) > -1) && object1 != object2;
 };
 var checkRightOf = function (object1, object2, state) {
+    if (object2 === 'floor' || object1 == 'floor') {
+        return false;
+    }
     return !(state.stacks[state.stacks.length - 1].indexOf(object2) > -1) && object1 != object2;
 };

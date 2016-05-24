@@ -2653,6 +2653,7 @@ function getObjectsInside(entity, state) {
 function getObjectsOntop(entity, state) {
     // Returns objects directly on top of entity (will not work for more than one entity)
     var tmp = [];
+    var tmp2 = [];
     for (var k = 0; k < entity.length; k++) {
         var innerTmp = [];
         if (entity[k].length != 1) {
@@ -2675,7 +2676,8 @@ function getObjectsOntop(entity, state) {
             }
         }
         if (innerTmp.length > 0) {
-            tmp.push(innerTmp);
+            tmp.push(innerTmp.slice());
+            tmp2.push(innerTmp.slice());
         }
     }
     return tmp;
@@ -2773,9 +2775,8 @@ function getObjectsAbove(entity, state) {
 }
 //****Functions for checking physical laws****
 //Check that object1 can be on top of object 2
-//TODO: Need to implement pyramid etc.
 var checkOnTopOf = function (object1, object2, state) {
-    if (object2 == undefined || object1 == undefined) {
+    if (object2 === undefined || object1 === undefined || object1 === 'floor') {
         return false;
     }
     var objects = state.objects;
@@ -2797,7 +2798,21 @@ var checkOnTopOf = function (object1, object2, state) {
     // A box cannot contain pyrmamids, planks or boxes of the same size
     if (objects[object2].form == 'box') {
         if (objects[object1].form == 'pyramid' || objects[object1].form == 'plank' || objects[object1].form == 'box') {
-            if (objects[object2].size == 'large' && objects[object2].size == 'large' || objects[object2].size == 'small') {
+            if ((objects[object1].size == 'large' && objects[object2].size == 'large') || objects[object2].size == 'small') {
+                return false;
+            }
+        }
+    }
+    if (objects[object1].form == 'box') {
+        if (objects[object1].size == 'small') {
+            //Small boxes cannot be supported by small bricks or pyramids
+            if ((objects[object2].form == 'pyramid' || objects[object2].form == 'brick') && objects[object2].size == 'small') {
+                return false;
+            }
+        }
+        else if (objects[object1].size == 'large') {
+            //Large boxes cannot be supported by large pyramids
+            if (objects[object2].form == 'pyramid' && objects[object2].size == 'large') {
                 return false;
             }
         }
@@ -2806,16 +2821,17 @@ var checkOnTopOf = function (object1, object2, state) {
 };
 //Check that object1 can be above object2
 var checkAbove = function (object1, object2, state) {
-    for (var i = 0; i < state.stacks.length; i++) {
-        if (state.stacks[i].indexOf(object2) != -1) {
-            return checkOnTopOf(object1, state.stacks[i][state.stacks[i].length - 1], state);
-        }
+    if (object2 === 'floor') {
+        return false;
     }
-    //No stack contained object2
-    return false;
+    return true;
+    //return checkOnTopOf(object1, object2, state);
 };
 //Check that object1 can be under object2
 var checkUnder = function (object1, object2, state) {
+    if (object1 === 'floor') {
+        return false;
+    }
     //A ball cannot be under antyhing
     if (state.objects[object2].form == 'ball') {
         return false;
@@ -2825,15 +2841,24 @@ var checkUnder = function (object1, object2, state) {
 };
 //Check that object1 can be beside object2
 var checkBeside = function (object1, object2, state) {
+    if (object2 === 'floor' || object1 == 'floor') {
+        return false;
+    }
     return object1 != object2;
 };
 //Check that object1 can be left of object2
 var checkLeftOf = function (object1, object2, state) {
+    if (object2 === 'floor' || object1 == 'floor') {
+        return false;
+    }
     return !(state.stacks[0].indexOf(object2) > -1) && object1 != object2;
 };
 //Check that object1 can be right of object2
 var checkRightOf = function (object1, object2, state) {
-    return !(state.stacks[state.stacks.length].indexOf(object2) > -1) && object1 != object2;
+    if (object2 === 'floor' || object1 == 'floor') {
+        return false;
+    }
+    return !(state.stacks[state.stacks.length - 1].indexOf(object2) > -1) && object1 != object2;
 };
 ///<reference path="World.ts"/>
 ///<reference path="Parser.ts"/>
@@ -2920,51 +2945,57 @@ var Interpreter;
      */
     function interpretCommand(cmd, state) {
         //Maps a relation to a the phsyics function correlating
-        var physicFuncionsMap = new collections.Dictionary();
-        physicFuncionsMap.setValue('inside', checkOnTopOf);
-        physicFuncionsMap.setValue('above', checkAbove);
-        physicFuncionsMap.setValue('under', checkUnder);
-        physicFuncionsMap.setValue('leftof', checkLeftOf);
-        physicFuncionsMap.setValue('rightof', checkRightOf);
-        physicFuncionsMap.setValue('beside', checkBeside);
-        physicFuncionsMap.setValue('ontop', checkOnTopOf);
+        var physicFunctionsMap = new collections.Dictionary();
+        physicFunctionsMap.setValue('inside', checkOnTopOf);
+        physicFunctionsMap.setValue('above', checkAbove);
+        physicFunctionsMap.setValue('under', checkUnder);
+        physicFunctionsMap.setValue('leftof', checkLeftOf);
+        physicFunctionsMap.setValue('rightof', checkRightOf);
+        physicFunctionsMap.setValue('beside', checkBeside);
+        physicFunctionsMap.setValue('ontop', checkOnTopOf);
+        if (cmd.entity.object.form == 'floor') {
+            throw ('Cannot move or hold the floor');
+        }
         removeObjectsNotInStacks(state);
-        var entityObjects = getNodeObjects(cmd.entity.object, state);
+        var entityObjects = getNodeObjects(cmd.entity, state);
         var interpretation = [];
+        //If there exists a location of where to put the object(s)
         if (cmd.location) {
             var locationObjects = getNodeObjects(cmd.location.entity, state);
             for (var i = 0; i < locationObjects.length; i++) {
                 for (var j = 0; j < locationObjects[i].length; j++) {
                     for (var k = 0; k < entityObjects.length; k++) {
+                        var conjCommands = [];
+                        var isPossible = true;
                         for (var l = 0; l < entityObjects[k].length; l++) {
-                            if (physicFuncionsMap.getValue(cmd.location.relation)(entityObjects[k][l], locationObjects[i][j], state)) {
-                                interpretation.push([{ polarity: true, relation: cmd.location.relation, args: [entityObjects[k][l], locationObjects[i][j]] }]);
+                            if (physicFunctionsMap.getValue(cmd.location.relation)(entityObjects[k][l], locationObjects[i][j], state)) {
+                                conjCommands.push({ polarity: true, relation: cmd.location.relation, args: [entityObjects[k][l], locationObjects[i][j]] });
                             }
+                            else {
+                                isPossible = false;
+                            }
+                        }
+                        //If conjunction of commands exist, push it
+                        if (conjCommands.length != 0 && isPossible) {
+                            interpretation.push(conjCommands);
                         }
                     }
                 }
             }
         }
         else {
-            if (cmd.entity.quantifier == 'any') {
-                for (var i = 0; i < entityObjects.length; i++) {
-                    for (var j = 0; j < entityObjects[i].length; j++) {
-                        interpretation.push([{ polarity: true, relation: "holding", args: [entityObjects[i][j]] }]);
-                    }
-                }
+            if (entityObjects.length > 1 || entityObjects[0].length > 1) {
+                throw new Error('Cannot hold more than one object');
             }
-            else {
-                for (var i = 0; i < entityObjects.length; i++) {
-                    var conjCommands = [];
-                    for (var j = 0; j < entityObjects[i].length; j++) {
-                        conjCommands.push({ polarity: true, relation: "holding", args: [entityObjects[i][j]] });
-                    }
-                    interpretation.push(conjCommands);
+            //No location, must be "holding" relation
+            for (var i = 0; i < entityObjects.length; i++) {
+                for (var j = 0; j < entityObjects[i].length; j++) {
+                    interpretation.push([{ polarity: true, relation: "holding", args: [entityObjects[i][j]] }]);
                 }
             }
         }
         if (interpretation.length == 0) {
-            throw new Error('No intepretation found');
+            throw new Error('Physically impossible');
         }
         return interpretation;
     }
@@ -3050,11 +3081,22 @@ var Interpreter;
     function getEntityObjects(node, state) {
         var entity = getNodeObjects(node.object, state);
         if (node.quantifier == "the") {
+            if (entity.length > 1) {
+                var tmpValue = entity[0][0];
+                for (var i = 1; i < entity.length; i++) {
+                    if (entity[i].length > 1 || entity[i][0] != tmpValue) {
+                        throw new Error('Cannot find a specific object for THE request');
+                    }
+                    else {
+                        entity.splice(i, 1);
+                    }
+                }
+            }
             if (entity.length == 1 && entity[0].length == 1) {
                 return entity;
             }
             else {
-                return [];
+                throw Error('Need to specify the');
             }
         }
         else if (node.quantifier == "any") {
@@ -3080,14 +3122,19 @@ var Interpreter;
         var objects = getNodeObjects(node.object, state);
         var concatObjects = Array.prototype.concat.apply([], objects);
         var location = getNodeObjects(node.location, state);
+        var intersectionObjects = [];
         for (var i = 0; i < location.length; i++) {
+            var innerIntersection = [];
             for (var j = 0; j < location[i].length; j++) {
-                if (concatObjects.indexOf(location[i][j]) == -1) {
-                    location[i].splice(j, 1);
+                if (concatObjects.indexOf(location[i][j]) > -1) {
+                    innerIntersection.push(location[i][j]);
                 }
             }
+            if (innerIntersection.length > 0) {
+                intersectionObjects.push(innerIntersection);
+            }
         }
-        return location;
+        return intersectionObjects;
     }
     function removeObjectsNotInStacks(state) {
         // This removes all the objects in the state which is not in the stacks
@@ -3095,7 +3142,7 @@ var Interpreter;
         for (var obj in state.objects) {
             objectExists = false;
             for (var id in state.stacks) {
-                if (state.stacks[id].indexOf(obj) > -1) {
+                if (state.stacks[id].indexOf(obj) > -1 || state.holding == obj) {
                     objectExists = true;
                 }
             }
@@ -3203,9 +3250,151 @@ function aStarSearch(graph, start, goal, heuristics, timeout) {
     }
     return undefined;
 }
+///<reference path="Graph.ts"/>
+///<reference path="RelationFunctions.ts"/>
+//Graph for states in shrdlite, neighbors are the state after making actions
+//d - drop, l - left, r - right, p - pick up
+var StateEdge = (function (_super) {
+    __extends(StateEdge, _super);
+    function StateEdge() {
+        _super.apply(this, arguments);
+    }
+    return StateEdge;
+}(Edge));
+var StateNode = (function () {
+    function StateNode(state) {
+        this.state = state;
+    }
+    StateNode.prototype.add = function (state) {
+        return new StateNode(state);
+    };
+    StateNode.prototype.compareTo = function (other) {
+        var isSame = true;
+        for (var i = 0; i < other.state.stacks.length; i++) {
+            for (var j = 0; j < other.state.stacks[i].length; j++) {
+                if (!this.state.stacks[i][j] || this.state.stacks[i][j] != other.state.stacks[i][j]) {
+                    isSame = false;
+                }
+            }
+        }
+        if (this.state.holding != other.state.holding) {
+            isSame = false;
+        }
+        if (this.state.arm != other.state.arm) {
+            isSame = false;
+        }
+        if (isSame) {
+            return 0;
+        }
+        return 1;
+    };
+    StateNode.prototype.toString = function () {
+        return JSON.stringify(this.state);
+    };
+    return StateNode;
+}());
+var StateGraph = (function () {
+    function StateGraph() {
+    }
+    StateGraph.prototype.outgoingEdges = function (node) {
+        //TODO: Probably need to copy the state all the time?
+        //All edges
+        var edges = [];
+        var state = node.state;
+        //Can go left
+        if (state.arm > 0) {
+            var stateCpy = { stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined };
+            for (var i = 0; i < state.stacks.length; i++) {
+                stateCpy.stacks.push(state.stacks[i].slice());
+            }
+            stateCpy.holding = state.holding;
+            stateCpy.arm = state.arm;
+            stateCpy.objects = state.objects;
+            stateCpy.examples = state.examples;
+            var edge = new StateEdge();
+            edge.from = node;
+            stateCpy.arm--;
+            edge.to = new StateNode(stateCpy);
+            edge.cost = 1;
+            edge.action = "l";
+            edges.push(edge);
+        }
+        //Can go right
+        if (state.arm < state.stacks.length - 1) {
+            var stateCpy = { stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined };
+            for (var i = 0; i < state.stacks.length; i++) {
+                stateCpy.stacks.push(state.stacks[i].slice());
+            }
+            stateCpy.holding = state.holding;
+            stateCpy.arm = state.arm;
+            stateCpy.objects = state.objects;
+            stateCpy.examples = state.examples;
+            var edge = new StateEdge();
+            edge.from = node;
+            stateCpy.arm++;
+            edge.to = new StateNode(stateCpy);
+            edge.cost = 1;
+            edge.action = "r";
+            edges.push(edge);
+        }
+        //Arm is holding, i.e can drop
+        if (state.holding && checkOnTopOf(state.holding, state.stacks[state.arm][state.stacks[state.arm].length - 1] ?
+            state.stacks[state.arm][state.stacks[state.arm].length - 1] : 'floor', state)) {
+            var stateCpy = { stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined };
+            for (var i = 0; i < state.stacks.length; i++) {
+                stateCpy.stacks.push(state.stacks[i].slice());
+            }
+            stateCpy.holding = state.holding;
+            stateCpy.arm = state.arm;
+            stateCpy.objects = state.objects;
+            stateCpy.examples = state.examples;
+            var edge = new StateEdge();
+            edge.from = node;
+            //Check if drop is possible according to physical laws
+            stateCpy.stacks[stateCpy.arm].push(stateCpy.holding);
+            stateCpy.holding = null;
+            edge.to = new StateNode(stateCpy);
+            edge.cost = 1;
+            edge.action = "d";
+            edges.push(edge);
+        }
+        //Not holding and object exists in current column
+        if (!state.holding && state.stacks[state.arm].length != 0) {
+            var stateCpy = { stacks: [], holding: undefined, arm: undefined, objects: undefined, examples: undefined };
+            for (var i = 0; i < state.stacks.length; i++) {
+                stateCpy.stacks.push(state.stacks[i].slice());
+            }
+            stateCpy.holding = state.holding;
+            stateCpy.arm = state.arm;
+            stateCpy.objects = state.objects;
+            stateCpy.examples = state.examples;
+            var edge = new StateEdge();
+            edge.from = node;
+            stateCpy.holding = stateCpy.stacks[stateCpy.arm][stateCpy.stacks[stateCpy.arm].length - 1];
+            stateCpy.stacks[stateCpy.arm].splice(stateCpy.stacks[stateCpy.arm].length - 1, 1);
+            edge.to = new StateNode(stateCpy);
+            edge.cost = 1;
+            edge.action = "p";
+            edges.push(edge);
+        }
+        return edges;
+    };
+    StateGraph.prototype.compareNodes = function (a, b) {
+        if (a == undefined || b == undefined) {
+            return 1;
+        }
+        return a.compareTo(b);
+    };
+    StateGraph.prototype.toString = function (start, goal, path) {
+        return "";
+    };
+    return StateGraph;
+}());
 ///<reference path="World.ts"/>
 ///<reference path="Interpreter.ts"/>
 ///<reference path="Graph.ts"/>
+///<reference path="StateGraph.ts"/>
+///<reference path="RelationFunctions.ts"/>
 ///<reference path="lib/collections.ts"/>
 ///<reference path="lib/node.d.ts"/>
 /**
@@ -3248,6 +3437,7 @@ var Planner;
             return plans;
         }
         else {
+            console.log('Throwing error');
             // only throw the first error found
             throw errors[0];
         }
@@ -3278,32 +3468,82 @@ var Planner;
      * be added using the `push` method.
      */
     function planInterpretation(interpretation, state) {
-        // var graph = new StateGraph();
-        // var startNode = new StateNode();
-        // var result = aStarSearch(
-        //     graph,
-        //     startNode,
-        //     function (node : StateNode) : boolean { // Goal-checking function
-        //         for (let i = 0; i < interpretation.length; i++) {
-        //             var fulfillsAll = true;
-        //             for (let j = 0; j < interpretation[i].length; j++) {
-        //                 if (!interpretationAccepted(interpretation[i][j], node)) {
-        //                     fulfillsAll = false;
-        //                 }
-        //             }
-        //             if (fulfillsAll) {
-        //                 return true;
-        //             }
-        //         }
-        //         return false;
-        //     }, function (node : StateNode) : number { // Heuristics function
-        //         // Implement plz
-        //         return 1;
-        //     },
-        //     99999);
-        //
-        // return generatePlanFromResult(result, graph);
-        return [];
+        var graph = new StateGraph();
+        var startNode = new StateNode(state);
+        console.log('Start state: ' + startNode);
+        var isGoal = function (node) {
+            for (var i = 0; i < interpretation.length; i++) {
+                var fulfillsAll = true;
+                for (var j = 0; j < interpretation[i].length; j++) {
+                    if (!interpretationAccepted(interpretation[i][j], node)) {
+                        fulfillsAll = false;
+                    }
+                }
+                if (fulfillsAll) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        var heuristic = function (node) {
+            // Implement plz
+            return 0;
+        };
+        var result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
+        return generatePlanFromResult(startNode, result, graph);
+    }
+    function generatePlanFromResult(startNode, result, graph) {
+        var plan = [];
+        result.path.unshift(startNode);
+        for (var i = 0; i < result.path.length; i++) {
+            var edges = graph.outgoingEdges(result.path[i]);
+            var pathNode = result.path[i + 1];
+            for (var j = 0; j < edges.length; j++) {
+                if (graph.compareNodes(pathNode, edges[j].to) == 0) {
+                    plan.push(edges[j].action);
+                }
+            }
+        }
+        return plan;
+    }
+    function interpretationAccepted(interpretation, node) {
+        if (interpretation.args[1]) {
+            var objects = [];
+            var secondArg = [];
+            var tmp = [];
+            tmp.push(interpretation.args[1]);
+            secondArg.push(tmp);
+            if (interpretation.relation == "leftof") {
+                objects = getObjectsLeftOf(secondArg, node.state);
+            }
+            else if (interpretation.relation == "rightof") {
+                objects = getObjectsRightOf(secondArg, node.state);
+            }
+            else if (interpretation.relation == "inside") {
+                objects = getObjectsInside(secondArg, node.state);
+            }
+            else if (interpretation.relation == "ontop") {
+                objects = getObjectsOntop(secondArg, node.state);
+            }
+            else if (interpretation.relation == "under") {
+                objects = getObjectsUnder(secondArg, node.state);
+            }
+            else if (interpretation.relation == "beside") {
+                objects = getObjectsBeside(secondArg, node.state);
+            }
+            else if (interpretation.relation == "above") {
+                objects = getObjectsAbove(secondArg, node.state);
+            }
+            if (objects[0] && objects[0].indexOf(interpretation.args[0]) > -1) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            return node.state.holding == interpretation.args[0];
+        }
     }
 })(Planner || (Planner = {}));
 ///<reference path="World.ts"/>

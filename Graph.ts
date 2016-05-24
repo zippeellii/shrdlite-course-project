@@ -55,6 +55,7 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+    var time = new Date().getTime();
     //Initial setup
     var processed = new collections.Set<Node>();
     //Store the path, i.e what parent that has the shortest path for me
@@ -82,6 +83,9 @@ function aStarSearch<Node> (
 
     //Whenever there is a new node to visit, do it
     while (!nextToVisit.isEmpty()){
+        if(new Date().getTime() - time > timeout){
+            throw ('Timeout');
+        }
       var currentNode = nextToVisit.dequeue();
       if(goal(currentNode)){
         var pathNode = currentNode;
