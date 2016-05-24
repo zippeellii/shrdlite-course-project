@@ -2821,21 +2821,23 @@ var checkOnTopOf = function (object1, object2, state) {
 };
 //Check that object1 can be above object2
 var checkAbove = function (object1, object2, state) {
-    if (object2 === 'floor') {
-        return false;
-    }
-    return true;
-    //return checkOnTopOf(object1, object2, state);
-};
-//Check that object1 can be under object2
-var checkUnder = function (object1, object2, state) {
     if (object1 === 'floor') {
         return false;
     }
-    //A ball cannot be under antyhing
+    if (object2 === 'floor') {
+        return true;
+    }
+    if (state.objects[object1].size === 'small' && state.objects[object1].size === 'large') {
+        return false;
+    }
+    //Nothing can be above a ball
     if (state.objects[object2].form == 'ball') {
         return false;
     }
+    return true;
+};
+//Check that object1 can be under object2
+var checkUnder = function (object1, object2, state) {
     //If one can exist under the other is above
     return checkAbove(object2, object1, state);
 };
@@ -2851,14 +2853,14 @@ var checkLeftOf = function (object1, object2, state) {
     if (object2 === 'floor' || object1 == 'floor') {
         return false;
     }
-    return !(state.stacks[0].indexOf(object2) > -1) && object1 != object2;
+    return object1 != object2;
 };
 //Check that object1 can be right of object2
 var checkRightOf = function (object1, object2, state) {
     if (object2 === 'floor' || object1 == 'floor') {
         return false;
     }
-    return !(state.stacks[state.stacks.length - 1].indexOf(object2) > -1) && object1 != object2;
+    return object1 != object2;
 };
 ///<reference path="World.ts"/>
 ///<reference path="Parser.ts"/>
@@ -2984,18 +2986,17 @@ var Interpreter;
             }
         }
         else {
-            if (entityObjects.length > 1 || entityObjects[0].length > 1) {
-                throw new Error('Cannot hold more than one object');
-            }
             //No location, must be "holding" relation
             for (var i = 0; i < entityObjects.length; i++) {
-                for (var j = 0; j < entityObjects[i].length; j++) {
-                    interpretation.push([{ polarity: true, relation: "holding", args: [entityObjects[i][j]] }]);
+                if (entityObjects[i].length === 1) {
+                    for (var j = 0; j < entityObjects[i].length; j++) {
+                        interpretation.push([{ polarity: true, relation: "holding", args: [entityObjects[i][j]] }]);
+                    }
                 }
             }
         }
         if (interpretation.length == 0) {
-            throw new Error('Physically impossible');
+            throw ('Physically impossible');
         }
         return interpretation;
     }
@@ -3085,7 +3086,7 @@ var Interpreter;
                 var tmpValue = entity[0][0];
                 for (var i = 1; i < entity.length; i++) {
                     if (entity[i].length > 1 || entity[i][0] != tmpValue) {
-                        throw new Error('Cannot find a specific object for THE request');
+                        throw ('Cannot find a specific object for THE request');
                     }
                     else {
                         entity.splice(i, 1);
@@ -3096,7 +3097,7 @@ var Interpreter;
                 return entity;
             }
             else {
-                throw Error('Need to specify the');
+                throw ('Need to specify the');
             }
         }
         else if (node.quantifier == "any") {

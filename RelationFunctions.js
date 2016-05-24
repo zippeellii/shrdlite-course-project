@@ -33,7 +33,7 @@ function getObjectsRightOf(entity, state) {
                 }
             }
         }
-        for (var i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
+        for (var i = distanceFromLeftAllowed + 1; i < state.stacks.length; i++) {
             for (var j = 0; j < state.stacks[i].length; j++) {
                 innerTmp.push(state.stacks[i][j]);
             }
@@ -231,18 +231,21 @@ var checkOnTopOf = function (object1, object2, state) {
     return true;
 };
 var checkAbove = function (object1, object2, state) {
-    if (object2 === 'floor') {
+    if (object1 === 'floor') {
         return false;
     }
-    return checkOnTopOf(object1, object2, state);
-};
-var checkUnder = function (object1, object2, state) {
-    if (object1 === 'floor') {
+    if (object2 === 'floor') {
+        return true;
+    }
+    if (state.objects[object1].size === 'large' && state.objects[object1].size === 'small') {
         return false;
     }
     if (state.objects[object2].form == 'ball') {
         return false;
     }
+    return true;
+};
+var checkUnder = function (object1, object2, state) {
     return checkAbove(object2, object1, state);
 };
 var checkBeside = function (object1, object2, state) {
@@ -255,11 +258,11 @@ var checkLeftOf = function (object1, object2, state) {
     if (object2 === 'floor' || object1 == 'floor') {
         return false;
     }
-    return !(state.stacks[0].indexOf(object2) > -1) && object1 != object2;
+    return object1 != object2;
 };
 var checkRightOf = function (object1, object2, state) {
     if (object2 === 'floor' || object1 == 'floor') {
         return false;
     }
-    return !(state.stacks[state.stacks.length - 1].indexOf(object2) > -1) && object1 != object2;
+    return object1 != object2;
 };

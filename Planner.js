@@ -13,7 +13,6 @@ var Planner;
                 plans.push(result);
             }
             catch (err) {
-                console.log(err);
                 errors.push(err);
             }
         });
@@ -51,7 +50,7 @@ var Planner;
         var heuristic = function (node) {
             return 0;
         };
-        var result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
+        var result = aStarSearch(graph, startNode, isGoal, heuristic, 1000);
         return generatePlanFromResult(startNode, result, graph);
     }
     function generatePlanFromResult(startNode, result, graph) {
