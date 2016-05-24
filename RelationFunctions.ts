@@ -36,7 +36,7 @@ function getObjectsRightOf(entity : string[][], state : WorldState) : string[][]
                 }
             }
         }
-        for (let i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
+        for (let i = distanceFromLeftAllowed+1; i < state.stacks.length; i++) {
             for (let j = 0; j < state.stacks[i].length; j++) {
                 innerTmp.push(state.stacks[i][j]);
             }
