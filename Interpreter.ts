@@ -118,7 +118,13 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         physicFunctionsMap.setValue('beside', checkBeside);
         physicFunctionsMap.setValue('ontop', checkOnTopOf);
 
+        if(cmd.entity.object.form == 'floor'){
+          throw ('Cannot move or hold the floor');
+        }
+
         removeObjectsNotInStacks(state);
+
+
 
         var entityObjects = getNodeObjects(cmd.entity, state);
         var interpretation : DNFFormula = [];
