@@ -49,13 +49,24 @@ function heuristicRightOf(state: WorldState, object1: string, object2: string){
 //Heuristic if object1 should be beside object2
 function heuristicBeside(state: WorldState, object1: string, object2: string){
     // Smallest distance of (object1, leftof) and (object1, rightof)
+    // Add two for pickup and drop
 }
 
 //Heuristic if the arm should hold object1
 function heuristicHolding(state: WorldState, object1: string){
-    // Distance from arm to object +
-    // Remove all objects on top object1 +
-    // One, for picking up
+    var result = 0;
+    if (state.holding === object1) {
+        return result;
+    }
+    if (state.holding != null && state.holding != undefined) {
+        result = result + 1;
+    }
+
+    var armResult = distanceFromArm(state, object1);
+    var ontopResult = amountOntop(state, object1);
+    if (armResult > -1 && ontopResult > -1) {
+        return result + armResult + ontopResult + 1;
+    }
 }
 
 //Horizontal distance from object1 to object2
@@ -96,7 +107,7 @@ function distanceFromArm(state: WorldState, object1: string) : number {
     return -1;
 }
 
-// Moves needed to remove everything ontop of an object
+// Moves needed to remove everything ontop of an object and return to original state
 function amountOntop(state: WorldState, object1: string) : number {
     var objectsOnTop = 0;
     for (let i = 0; i < state.stacks.length; i++) {
@@ -111,9 +122,9 @@ function amountOntop(state: WorldState, object1: string) : number {
                 }
             }
             // Multiply by 4 because it is the lowest amount of moves ever
-            // possible for moving something from a stack and
-            // returning the claw to its original position
-            return objectsOnTop * 4;
+            // possible for moving something from a stack and dropping it somewhere else
+            return objectsOnTop * 3;
         }
     }
+    return -1;
 }
