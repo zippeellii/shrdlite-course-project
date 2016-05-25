@@ -28,15 +28,57 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
 
 //Heuristic if object1 should be onTopOf(inside) object2
 function heuristicOnTopOf(state: WorldState, object1: string, object2: string){
-    // distance plus smallest of (remove all above object1) and (remove all above object2)
+    //TODO: Check if in the same stack, should calculate something
+    let totalCost = 0;
+    //Distance between the objects
+    let horizontal = distanceBetweenObjects(state, object1, object2);
+    //object1 and object2 is in the same stack
+    if(horizontal === 0){
+        return 0;
+    }
+    //Add the distance plus the movement of any possible objects already on top of 2
+    totalCost = horizontal + amountOntop(state, object2);
+    //Arm is already holding object, i.e only need to drop
+    if(state.holding === object1){
+        return totalCost + 1;
+    }
+    //Add cost to pick up object1
+    totalCost += amountOntop(state, object1);
+    //Add +2 for take and drop
+    return totalCost + 2;
 }
 //Heuristic if object1 should be above object2
 function heuristicAbove(state: WorldState, object1: string, object2: string){
-    // just distance for now
+    let horizontal = distanceBetweenObjects(state, object1, object2);
+    //Objects are already in same stack or object1 is being held by arm
+    if(horizontal === 0){
+        return 0;
+    }
+    //Holding object1
+    if(state.holding === object1){
+        return distanceFromArm(state, object2);
+    }
+    //Holding object2
+    if(state.holding === object2){
+        return distanceFromArm(state, object1);
+    }
+    //Remove all objects above object1 and move it
+    return horizontal + amountOntop(state, object1);
 }
 //Heuristic if object1 should be under object2
 function heuristicUnder(state: WorldState, object1: string, object2: string){
-    // just distance for now
+    let horizontal = distanceBetweenObjects(state, object1, object2);
+    if(horizontal === 0){
+        return 0;
+    }
+    if(state.holding === object1){
+        return distanceFromArm(state, object2);
+    }
+    if(state.holding === object2){
+        return distanceFromArm(state, object1);
+    }
+    //Remove all objects above object2 and move it
+    return horizontal + amountOntop(state, object2);
 }
 //Heuristic if object1 should be to the left of object2
 function heuristicLeftOf(state: WorldState, object1: string, object2: string){
