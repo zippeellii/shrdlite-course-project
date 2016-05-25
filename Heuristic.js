@@ -149,24 +149,49 @@ function heuristicRightOf(state, object1, object2) {
         return result + 2;
     }
 }
-function heuristicBeside(state, object1, object2) {
-    var result = 0;
-    if (state.holding === object1) {
-        result = distanceFromArm(state, object2) - 1;
-        return result + 1;
+function heuristicBeside(state, literals) {
+    var shortestOfConjunction = Number.MAX_VALUE;
+    for (var i = 0; i < literals.length; i++) {
+        var result = 0;
+        var fromObject = literals[i].args[0];
+        var toObject = literals[i].args[1];
+        if (state.holding === fromObject) {
+            result = distanceFromArm(state, toObject) - 1;
+            result = result + 1;
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
+        if (state.holding === toObject) {
+            result = distanceFromArm(state, fromObject) - 1;
+            result = result + 1;
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
+        result = distanceBetweenObjects(state, fromObject, toObject) - 1;
+        if (result === -1) {
+            result = 3;
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
+        else if (result === 0) {
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
+        result = result + 2;
+        if (result < shortestOfConjunction) {
+            shortestOfConjunction = result;
+            continue;
+        }
     }
-    if (state.holding === object2) {
-        result = distanceFromArm(state, object1) - 1;
-        return result + 1;
-    }
-    result = distanceBetweenObjects(state, object1, object2) - 1;
-    if (result === -1) {
-        return 3;
-    }
-    else if (result === 0) {
-        return result;
-    }
-    return result + 2;
+    return shortestOfConjunction;
 }
 function heuristicHolding(state, literals) {
     var result = 0;

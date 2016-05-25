@@ -1,3 +1,17 @@
+// If onTop, object2 can only be FLOOR (ingen inside funkar)
+    // Ta bort allt som är OVANFÖR de som ska flyttas, +2 för varje grej
+        // Spara undan för varje stack hur mycket vi "tagit bort"
+
+// If above, det som behövs för att ta bort allt som ligger på de som ska flyttas upp (och inte ligger ovanpå)
+    // Plussa på minsta distansen som inte är noll
+        // Plussa på 3 för varje som inte ligger där de ska
+
+// If beside, ta minsta distansen som inte är noll
+
+// If left-/right-of,
+
+// If under,
+
 var heuristicFunctions = new collections.Dictionary<string, Function>();
 heuristicFunctions.setValue('inside', heuristicOnTopOf);
 heuristicFunctions.setValue('above', heuristicAbove);
@@ -192,37 +206,66 @@ function heuristicRightOf(state: WorldState, object1: string, object2: string){
 }
 
 //Heuristic if object1 should be beside object2
-function heuristicBeside(state: WorldState, object1: string, object2: string){
-    var result = 0;
+function heuristicBeside(state: WorldState, literals : Interpreter.Literal[]){
+    var shortestOfConjunction = Number.MAX_VALUE;
 
-    if (state.holding === object1) {
+    for (let i = 0; i < literals.length; i++) {
+        var result = 0;
+        var fromObject = literals[i].args[0];
+        var toObject = literals[i].args[1];
+
+
+        if (state.holding === fromObject) {
+            // Smallest distance of directly left of or directly right of
+            result = distanceFromArm(state, toObject) - 1;
+
+            // Add one for dropping
+            result = result + 1;
+
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
+
+        if (state.holding === toObject) {
+            // Smallest distance of directly left of or directly right of
+            result = distanceFromArm(state, fromObject) - 1;
+
+            // Add one for dropping
+            result = result + 1;
+
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
+
         // Smallest distance of directly left of or directly right of
-        result = distanceFromArm(state, object2) - 1;
+        result = distanceBetweenObjects(state, fromObject, toObject) - 1;
+        if (result === -1) {
+            // In same stack, add three for pickup, move and drop
+            result = 3;
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        } else if (result === 0) {
+            // Directly next to each other
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
 
-        // Add one for dropping
-        return result + 1;
+        // Add two for picking up and dropping
+        result = result + 2;
+        if (result < shortestOfConjunction) {
+            shortestOfConjunction = result;
+            continue;
+        }
     }
-
-    if (state.holding === object2) {
-        // Smallest distance of directly left of or directly right of
-        result = distanceFromArm(state, object1) - 1;
-
-        // Add one for dropping
-        return result + 1;
-    }
-
-    // Smallest distance of directly left of or directly right of
-    result = distanceBetweenObjects(state, object1, object2) - 1;
-    if (result === -1) {
-        // In same stack, add three for pickup, move and drop
-        return 3;
-    } else if (result === 0) {
-        // Directly next to each other
-        return result;
-    }
-
-    // Add two for picking up and dropping
-    return result + 2;
+    return shortestOfConjunction;
 }
 
 //Heuristic if the arm should hold object1
