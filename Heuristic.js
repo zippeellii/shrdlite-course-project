@@ -10,7 +10,7 @@ function heuristicRightOf(state, object1, object2) {
 }
 function heuristicBeside(state, object1, object2) {
 }
-function heuristicHolding(state, object1, object2) {
+function heuristicHolding(state, object1) {
 }
 function distance(state, object1, object2) {
     var indexFrom = -1;
@@ -31,4 +31,7 @@ function distance(state, object1, object2) {
         return result;
     }
     return -1;
+}
+function amountOntop(state, object1) {
+    return 0;
 }
