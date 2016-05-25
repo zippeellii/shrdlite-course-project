@@ -101,10 +101,9 @@ module Planner {
             return false;
           };
           var heuristic = function (node : StateNode) : number { // Heuristics function
-              // Implement plz
-              return 0;
+              return evalHeuristic(interpretation, node.state);
           };
-        var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 1000);
+        var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10000);
         return generatePlanFromResult(startNode, result, graph);
     }
 

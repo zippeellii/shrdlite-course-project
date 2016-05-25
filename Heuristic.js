@@ -14,7 +14,12 @@ function evalHeuristic(interpretation, state) {
             var object1 = interpretation[i][j].args[0];
             var object2 = interpretation[i][j].args[1];
             var relation = interpretation[i][j].relation;
-            length += heuristicFunctions.getValue(relation)(state, object1, object2);
+            if (relation === 'holding') {
+                length += heuristicHolding(state, object1);
+            }
+            else {
+                length += heuristicFunctions.getValue(relation)(state, object1, object2);
+            }
         }
         totLength = length < totLength ? length : totLength;
     }
@@ -27,6 +32,8 @@ function heuristicOnTopOf(state, object1, object2) {
         return 0;
     }
     totalCost = horizontal + amountOntop(state, object2);
+    console.log("HORIZONTAL: ", horizontal);
+    console.log("AMOUNT ON TOP: ", totalCost - horizontal);
     if (state.holding === object1) {
         return totalCost + 1;
     }
@@ -157,9 +164,9 @@ function heuristicBeside(state, object1, object2) {
         result = distanceFromArm(state, object1) - 1;
         return result + 1;
     }
-    result = result + distanceBetweenObjects(state, object1, object2) - 1;
+    result = distanceBetweenObjects(state, object1, object2) - 1;
     if (result === -1) {
-        return 2;
+        return 3;
     }
     else if (result === 0) {
         return result;
@@ -176,9 +183,7 @@ function heuristicHolding(state, object1) {
     }
     var armResult = distanceFromArm(state, object1);
     var ontopResult = amountOntop(state, object1);
-    if (armResult > -1 && ontopResult > -1) {
-        return result + armResult + ontopResult + 1;
-    }
+    return result + armResult + ontopResult + 1;
 }
 function distanceBetweenObjects(state, object1, object2) {
     var indexFrom = -1;
@@ -191,14 +196,25 @@ function distanceBetweenObjects(state, object1, object2) {
             indexTo = i;
         }
     }
-    if (indexFrom > -1 && indexTo > -1) {
-        var result = indexTo - indexFrom;
+    if (indexFrom === -1) {
+        var result = indexTo - state.arm;
         if (result < 0) {
             return result * -1;
         }
         return result;
     }
-    return -1;
+    else if (indexTo === -1) {
+        var result = state.arm - indexFrom;
+        if (result < 0) {
+            return result * -1;
+        }
+        return result;
+    }
+    var result = indexTo - indexFrom;
+    if (result < 0) {
+        return result * -1;
+    }
+    return result;
 }
 function distanceFromArm(state, object1) {
     var armIndex = state.arm;
@@ -212,7 +228,7 @@ function distanceFromArm(state, object1) {
             return result;
         }
     }
-    return -1;
+    return 0;
 }
 function amountOntop(state, object1) {
     var objectsOnTop = 0;
@@ -230,5 +246,5 @@ function amountOntop(state, object1) {
             return objectsOnTop * 3;
         }
     }
-    return -1;
+    return 0;
 }

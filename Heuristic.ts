@@ -17,7 +17,12 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
             let object1 = interpretation[i][j].args[0];
             let object2 = interpretation[i][j].args[1];
             let relation = interpretation[i][j].relation;
-            length += heuristicFunctions.getValue(relation)(state, object1, object2);
+            if(relation === 'holding'){
+                length += heuristicHolding(state, object1);
+            }
+            else{
+                length += heuristicFunctions.getValue(relation)(state, object1, object2);
+            }
         }
         //Overwrite if the new length is shorter
         totLength = length < totLength ? length : totLength;
@@ -38,6 +43,8 @@ function heuristicOnTopOf(state: WorldState, object1: string, object2: string){ 
     }
     //Add the distance plus the movement of any possible objects already on top of 2
     totalCost = horizontal + amountOntop(state, object2);
+    console.log("HORIZONTAL: ", horizontal);
+    console.log("AMOUNT ON TOP: ", totalCost - horizontal);
     //Arm is already holding object, i.e only need to drop
     if(state.holding === object1){
         return totalCost + 1;
@@ -47,7 +54,7 @@ function heuristicOnTopOf(state: WorldState, object1: string, object2: string){ 
     //Add +2 for take and drop
     return totalCost + 2;
 }
-//Heuristic if object1 should be above object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
+//Heuristic if object1 should be above object2
 function heuristicAbove(state: WorldState, object1: string, object2: string){
     //TODO: Can be optimized, u know
     let horizontal = distanceBetweenObjects(state, object1, object2);
@@ -85,7 +92,7 @@ function heuristicUnder(state: WorldState, object1: string, object2: string){
     //Add two for picking up and dropping object2
     return horizontal + amountOntop(state, object2) + 2;
 }
-//Heuristic if object1 should be to the left of object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
+//Heuristic if object1 should be to the left of object2
 function heuristicLeftOf(state: WorldState, object1: string, object2: string){
     var result = 0;
     var firstIndex = -1;
@@ -137,7 +144,7 @@ function heuristicLeftOf(state: WorldState, object1: string, object2: string){
     }
 }
 
-//Heuristic if object1 should be to the right of object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
+//Heuristic if object1 should be to the right of object2
 function heuristicRightOf(state: WorldState, object1: string, object2: string){
     var result = 0;
     var firstIndex = -1;
@@ -189,7 +196,7 @@ function heuristicRightOf(state: WorldState, object1: string, object2: string){
     }
 }
 
-//Heuristic if object1 should be beside object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
+//Heuristic if object1 should be beside object2
 function heuristicBeside(state: WorldState, object1: string, object2: string){
     var result = 0;
 
@@ -210,10 +217,10 @@ function heuristicBeside(state: WorldState, object1: string, object2: string){
     }
 
     // Smallest distance of directly left of or directly right of
-    result = result + distanceBetweenObjects(state, object1, object2) - 1;
+    result = distanceBetweenObjects(state, object1, object2) - 1;
     if (result === -1) {
-        // In same stack, add two for pickup and drop
-        return 2;
+        // In same stack, add three for pickup, move and drop
+        return 3;
     } else if (result === 0) {
         // Directly next to each other
         return result;
@@ -237,10 +244,7 @@ function heuristicHolding(state: WorldState, object1: string){
     // Move arm into position and remove objects on top
     var armResult = distanceFromArm(state, object1);
     var ontopResult = amountOntop(state, object1);
-    if (armResult > -1 && ontopResult > -1) {
-        // Add one on the end for picking up
-        return result + armResult + ontopResult + 1;
-    }
+    return result + armResult + ontopResult + 1;
 }
 
 //Horizontal distance from object1 to object2
@@ -255,14 +259,24 @@ function distanceBetweenObjects(state: WorldState, object1: string, object2: str
             indexTo = i;
         }
     }
-    if (indexFrom > -1 && indexTo > -1) {
-        var result = indexTo - indexFrom;
-         if (result < 0) {
-             return result * -1;
-         }
-         return result;
+    if (indexFrom === -1) {
+        var result = indexTo - state.arm;
+        if (result < 0) {
+            return result * -1;
+        }
+        return result;
+    } else if (indexTo === -1) {
+        var result = state.arm - indexFrom;
+        if (result < 0) {
+            return result * -1;
+        }
+        return result;
     }
-    return -1;
+    var result = indexTo - indexFrom;
+    if (result < 0) {
+        return result * -1;
+    }
+    return result;
 }
 
 //Horizontal distance from the arm to object1
@@ -278,7 +292,7 @@ function distanceFromArm(state: WorldState, object1: string) : number {
             return result;
         }
     }
-    return -1;
+    return 0;
 }
 
 // Moves needed to remove everything ontop of an object and return to original state
@@ -300,5 +314,5 @@ function amountOntop(state: WorldState, object1: string) : number {
             return objectsOnTop * 3;
         }
     }
-    return -1;
+    return 0;
 }
