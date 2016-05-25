@@ -27,6 +27,23 @@ function heuristicHolding(state: WorldState, object1: string, object2: string){
 
 }
 //Horizontal distance from object1 to object2
-function distance(state: WorldState, object1: string, object2: string){
-
+function distance(state: WorldState, object1: string, object2: string) : number {
+    var indexFrom = -1;
+    var indexTo = -1;
+    for (let i = 0; i < state.stacks.length; i++) {
+        if (state.stacks[i].indexOf(object1) > -1) {
+            indexFrom = i;
+        }
+        if (state.stacks[i].indexOf(object2) > -1) {
+            indexTo = i;
+        }
+    }
+    if (indexFrom > -1 && indexTo > -1) {
+        var result = indexTo - indexFrom;
+         if (result > 0) {
+             return result * -1;
+         }
+         return result;
+    }
+    return -1;
 }
