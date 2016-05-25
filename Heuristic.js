@@ -25,10 +25,24 @@ function distance(state, object1, object2) {
     }
     if (indexFrom > -1 && indexTo > -1) {
         var result = indexTo - indexFrom;
-        if (result > 0) {
+        if (result < 0) {
             return result * -1;
         }
         return result;
+    }
+    return -1;
+}
+function distanceFromArm(state, object1) {
+    var armIndex = state.arm;
+    var objectIndex = -1;
+    for (var i = 0; i < state.stacks.length; i++) {
+        if (state.stacks[i].indexOf(object1) > -1) {
+            var result = armIndex - i;
+            if (result < 0) {
+                return result * -1;
+            }
+            return result;
+        }
     }
     return -1;
 }

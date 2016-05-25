@@ -25,7 +25,9 @@ function heuristicBeside(state: WorldState, object1: string, object2: string){
 
 //Heuristic if the arm should hold object1
 function heuristicHolding(state: WorldState, object1: string){
-    // Remove all objects on top object1, then adds one
+    // Distance from arm to object +
+    // Remove all objects on top object1 +
+    // One, for picking up
 }
 
 //Horizontal distance from object1 to object2
@@ -42,10 +44,26 @@ function distance(state: WorldState, object1: string, object2: string) : number 
     }
     if (indexFrom > -1 && indexTo > -1) {
         var result = indexTo - indexFrom;
-         if (result > 0) {
+         if (result < 0) {
              return result * -1;
          }
          return result;
+    }
+    return -1;
+}
+
+//Horizontal distance from the arm to object1
+function distanceFromArm(state: WorldState, object1: string) : number {
+    var armIndex = state.arm;
+    var objectIndex = -1;
+    for (let i = 0; i < state.stacks.length; i++) {
+        if (state.stacks[i].indexOf(object1) > -1) {
+            var result = armIndex - i;
+            if (result < 0) {
+                return result * -1;
+            }
+            return result;
+        }
     }
     return -1;
 }
