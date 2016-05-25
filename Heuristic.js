@@ -105,49 +105,68 @@ function heuristicLeftOf(state, object1, object2) {
         return result + 2;
     }
 }
-function heuristicRightOf(state, object1, object2) {
-    var result = 0;
-    var firstIndex = -1;
-    var holdingFirst = false;
-    var secondIndex = -1;
-    var holdingSecond = false;
-    if (state.holding === object1) {
-        firstIndex = state.arm;
-        holdingFirst = true;
-    }
-    else {
-        for (var i = 0; i < state.stacks.length; i++) {
-            if (state.stacks[i].indexOf(object1) > -1) {
-                firstIndex = i;
-                break;
+function heuristicRightOf(state, literals) {
+    var shortestOfConjunction = Number.MAX_VALUE;
+    for (var i = 0; i < literals.length; i++) {
+        var result = 0;
+        var firstIndex = -1;
+        var holdingFirst = false;
+        var secondIndex = -1;
+        var holdingSecond = false;
+        var firstObject = literals[i].args[0];
+        var secondObject = literals[i].args[1];
+        if (state.holding === firstObject) {
+            firstIndex = state.arm;
+            holdingFirst = true;
+        }
+        else {
+            for (var i_1 = 0; i_1 < state.stacks.length; i_1++) {
+                if (state.stacks[i_1].indexOf(firstObject) > -1) {
+                    firstIndex = i_1;
+                    break;
+                }
+            }
+        }
+        if (state.holding === secondObject) {
+            secondIndex = state.arm;
+            holdingSecond = true;
+        }
+        else {
+            for (var i_2 = 0; i_2 < state.stacks.length; i_2++) {
+                if (state.stacks[i_2].indexOf(firstObject) > -1) {
+                    secondIndex = i_2;
+                    break;
+                }
+            }
+        }
+        if (firstIndex > secondIndex) {
+            if (holdingFirst || holdingSecond) {
+                result = 1;
+                if (result < shortestOfConjunction) {
+                    shortestOfConjunction = result;
+                    continue;
+                }
+            }
+            shortestOfConjunction = 0;
+            continue;
+        }
+        else {
+            result = (secondIndex + 1) - firstIndex;
+            if (holdingFirst || holdingSecond) {
+                result = result + 1;
+                if (result < shortestOfConjunction) {
+                    shortestOfConjunction = result;
+                    continue;
+                }
+            }
+            result = result + 2;
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
             }
         }
     }
-    if (state.holding === object2) {
-        secondIndex = state.arm;
-        holdingSecond = true;
-    }
-    else {
-        for (var i = 0; i < state.stacks.length; i++) {
-            if (state.stacks[i].indexOf(object1) > -1) {
-                secondIndex = i;
-                break;
-            }
-        }
-    }
-    if (firstIndex > secondIndex) {
-        if (holdingFirst || holdingSecond) {
-            return 1;
-        }
-        return 0;
-    }
-    else {
-        result = (secondIndex + 1) - firstIndex;
-        if (holdingFirst || holdingSecond) {
-            return result + 1;
-        }
-        return result + 2;
-    }
+    return shortestOfConjunction;
 }
 function heuristicBeside(state, literals) {
     var shortestOfConjunction = Number.MAX_VALUE;
