@@ -29,21 +29,21 @@ module Interpreter {
     //////////////////////////////////////////////////////////////////////
     // exported functions, classes and interfaces/types
 
-/**
-Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
-* @param parses List of parses produced by the Parser.
-* @param currentState The current state of the world.
-* @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
-*/
-    export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
-        var errors : Error[] = [];
-        var interpretations : InterpretationResult[] = [];
+    /**
+    Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
+    * @param parses List of parses produced by the Parser.
+    * @param currentState The current state of the world.
+    * @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
+    */
+    export function interpret(parses: Parser.ParseResult[], currentState: WorldState): InterpretationResult[] {
+        var errors: Error[] = [];
+        var interpretations: InterpretationResult[] = [];
         parses.forEach((parseresult) => {
             try {
-                var result : InterpretationResult = <InterpretationResult>parseresult;
+                var result: InterpretationResult = <InterpretationResult>parseresult;
                 result.interpretation = interpretCommand(result.parse, currentState);
                 interpretations.push(result);
-            } catch(err) {
+            } catch (err) {
                 errors.push(err);
             }
         });
@@ -56,7 +56,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     }
 
     export interface InterpretationResult extends Parser.ParseResult {
-        interpretation : DNFFormula;
+        interpretation: DNFFormula;
     }
 
     export type DNFFormula = Conjunction[];
@@ -67,28 +67,28 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     * hold among some objects.
     */
     export interface Literal {
-	/** Whether this literal asserts the relation should hold
-	 * (true polarity) or not (false polarity). For example, we
-	 * can specify that "a" should *not* be on top of "b" by the
-	 * literal {polarity: false, relation: "ontop", args:
-	 * ["a","b"]}.
-	 */
-        polarity : boolean;
-	/** The name of the relation in question. */
-        relation : string;
-	/** The arguments to the relation. Usually these will be either objects
-     * or special strings such as "floor" or "floor-N" (where N is a column) */
-        args : string[];
+        /** Whether this literal asserts the relation should hold
+         * (true polarity) or not (false polarity). For example, we
+         * can specify that "a" should *not* be on top of "b" by the
+         * literal {polarity: false, relation: "ontop", args:
+         * ["a","b"]}.
+         */
+        polarity: boolean;
+        /** The name of the relation in question. */
+        relation: string;
+        /** The arguments to the relation. Usually these will be either objects
+         * or special strings such as "floor" or "floor-N" (where N is a column) */
+        args: string[];
     }
 
-    export function stringify(result : InterpretationResult) : string {
+    export function stringify(result: InterpretationResult): string {
         return result.interpretation.map((literals) => {
             return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
             // return literals.map(stringifyLiteral).join(" & ");
         }).join(" | ");
     }
 
-    export function stringifyLiteral(lit : Literal) : string {
+    export function stringifyLiteral(lit: Literal): string {
         return (lit.polarity ? "" : "-") + lit.relation + "(" + lit.args.join(",") + ")";
     }
 
@@ -105,144 +105,329 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * @param state The current state of the world. Useful to look up objects in the world.
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
-    function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-        // This returns a dummy interpretation involving two random objects in the world
-        // var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        // var a : string = objects[Math.floor(Math.random() * objects.length)];
-        // var b : string = objects[Math.floor(Math.random() * objects.length)];
-        // var interpretation : DNFFormula = [[
-        //     {polarity: true, relation: "ontop", args: [a, "floor"]},
-        //     {polarity: true, relation: "holding", args: [b]}
-        // ]];
+    function interpretCommand(cmd: Parser.Command, state: WorldState): DNFFormula {
+        let interpretation: DNFFormula = [];
+        let checkObject = (obj: Parser.Object) => {
+            let potentialObjects: string[] = [];
+            // Base case. Check if the basic object exists.
 
-        //var interpretation : DNFFormula;
-        // var args = [];
-        // if(cmd.entity){
-        //   if(cmd.entity.quantifier){
-        //     if(cmd.entity.quantifier == "the"){
-        //       // if world state contains 1 of the entity
-        //         // object in args!
-        //         if(cmd.location){
-        //           if(cmd.location.entity.object)
-        //         }
-        //       // if world state contains > 1 of the entity
-        //       // return ambigous!
-        //     }
-        //     else if(cmd.entity.quantifier == "any"){}
-        //   }
-        // }
-
-        if(command.command == "take"){
-          var potentialObjects = checkObject(command.entity.object);
-          return DNFFormula = [[
-            {polarity: true, relation: "holding", args: [potentialObjects[0]]}
-          ]];
-        }
-
-
-
-        var checkObject = (obj: Parser.Object) => {
-          // Base case. Check if the basic object exists.
-          if(obj.object == null){
-            var potentialObjects = [];
-            for(var worldObject in state.objects){
-              let other = state.objects[worldObject];
-              if(obj.size == other.size && obj.location == other.location
-                && obj.color == other.color){
-                  potentialObjects.push(worldObject);
+            if (obj.object == null) {
+                if(obj.form === "floor"){
+                  potentialObjects.push("floor");
+                  return potentialObjects;
                 }
-            }
-            return potentialObjects;
-          }
-          else{
-            var objects = checkObject(obj.object);
-            var relationTo = checkObject(obj.location.entity.object);
-            var potentialObjects = [];
-            var relation = obj.location.relation;
-            // Check pair-wise in objects and relationTo if any is true.
-            for(let o of objects){
-              for(let r of relationTo){
-                if(relation == "beside"){
-                  if(checkIfBeside(o, r, state)){
-                    potentialObjects.push(o);
-                  }
-                  // if r is beside o
-                  // Save o in return-list
-                }else if(relation == "under"){
-                  if(checkIfUnder(o, r, state)){
-                    potentialObjects.push(o);
-                  }
-                }else if(relation == "above"){
-                  if(checkIfAbove(o, r, state)){
-                    potentialObjects.push(o);
-                  }
+                for (let stack of state.stacks) {
+                    for (let worldObject of stack) {
+                        let other = state.objects[worldObject];
+                        let sameObj = checkForm(obj, other);
+                        if (sameObj) {
+                            potentialObjects.push(worldObject);
+                        }
+                    }
                 }
-              }
+                return potentialObjects;
+
             }
+            else {
+                let objects = checkObject(obj.object);
+                if (!obj.location) {
+                    potentialObjects = objects;
+                }
+                let relationTo = checkObject(obj.location.entity.object);
+                let relation = obj.location.relation;
+                // Check pair-wise in objects and relationTo if any is true.
+                for (let o of objects) {
+                    for (let r of relationTo) {
+                        if (relation === "beside") {
+                            if (checkIfBeside(o, r, state)) {
+                                potentialObjects.push(o);
+                            }
+                            // if r is beside o
+                            // Save o in return-list
+                        } else if (relation === "under") {
+                            // if(checkIfUnder(o, r, state)){
+                            //   potentialObjects.push(o);
+                            // }
+                        } else if (relation === "above") {
+                            if (checkIfAbove(o, r, state)) {
+                                potentialObjects.push(o);
+                            }
+                        } else if (relation === "inside") {
+                            if (checkIfInside(o, r, state)) {
+                                potentialObjects.push(o);
+                            }
+                        } else if (relation === "ontop") {
+                            if (checkIfInside(o, r, state)) {
+                              potentialObjects.push(o);
+                            }
+                        }
+                    }
+                }
 
             };
             return potentialObjects;
-          }
         };
 
-
-        var getObjectCords = (obj, state : WorldState) => {
-          var stacks = state.stacks, objCords;
-          for(let i = 0; i < stacks.length; i++){
-            for(let j = 0; j < stacks[i].length; j++){
-              if(obj == stacks[i][j]){
-                return {"x" : i, "y" : j};
-              }
-            }
-        };
-        var checkIfBeside = (obj, other, state : WorldState) => {
-          var objCords = getObjectCords(obj, state);
-          var otherCords = getObjectCords(other);
-          return objCords.y == otherCords.y &&
-            Math.abs(objCords.x - otherCords.x) == 1);
-        };
-        // Check if obj is above other.
-        var checkIfAbove = (obj, other, state : WorldState) => {
-          var objCords = getObjectCords(obj, state);
-          var otherCords = getObjectCords(other);
-          return objCords.x == otherCords.x &&
-            objCords.y > otherCords.y;
-        };
-
-
-
-        var checkBasicObjects = (obj : Parser.Object) => {
-          // Base case. Check if the basic object exists.
-          if(object.object == null){
-            var exists = [];
-            state.objects.forEach((other) => {
-              if(obj.size == other.size && obj.location == other.location
-                && obj.color == other.color){
-                  exists.push({
-                  "name" :
-                  });
-                  // Save obj
+        console.log("The obj", cmd);
+        if (cmd.command === "take") {
+            console.log("take!");
+            let potentialObjects = checkObject(cmd.entity.object);
+            console.log("Potential:", potentialObjects);
+            console.log("Potential2:", cmd.entity.object);
+            if (cmd.entity.quantifier === "the" || cmd.entity.quantifier === "an" || cmd.entity.quantifier === "any"
+                || cmd.entity.quantifier === "a") {
+                for (let potentialObject of potentialObjects) {
+                    interpretation.push([
+                        { polarity: true, relation: "holding", args: [potentialObject] }
+                    ]);
                 }
-            });
-            if(!exists){
-              return exists;
+            } else {
+                // Cant take more than 1 object
+                interpretation = [];
             }
-          }else{
-            var object = checkBasicObjects(obj.object);
-            var locationObj = checkBasicObjects(obj.location.entity.object);
-            if(obj.location.relation == 'beside'){
-              if(object.y == locationObj.y && object.x - locationObj == 1){
-                return object;
+            return interpretation;
+        }
+        else if (cmd.command === "move") {
+            console.log("put!")
+            let potentialObjects = checkObject(cmd.entity.object);
+            console.log("Potential obj:", potentialObjects);
+            let potentialLocations = checkObject(cmd.location.entity.object);
+            console.log("Potential Loc:", potentialLocations);
+            if (cmd.location.relation === "inside") {
+                for (let potentialObject of potentialObjects) {
+                    for (let potentialLocation of potentialLocations) {
+                        console.log("obj: ", potentialObject);
+                        console.log("loc: ", potentialLocation);
+                        let fits: boolean = checkIfFitIn(potentialObject, potentialLocation, state);
+                        console.log("fits", fits);
+                        if (fits) {
+                            let conjunction: Conjunction = [];
+                            let literal: Literal =   { polarity: true, relation: "inside", args: ["e", "k"] };
+                            conjunction.push(literal);
+                            interpretation.push(conjunction);
+                        }
+                    }
+                }
+                if (interpretation.length === 0) {
+                  console.log("return null");
+                  return null;
+                }
+                console.dir(interpretation);
+
+                return interpretation;
+
+            }else if(cmd.location.relation === "ontop"){
+              for (let potentialObject of potentialObjects) {
+                  for (let potentialLocation of potentialLocations) {
+                      console.log("obj: ", potentialObject);
+                      console.log("loc: ", potentialLocation);
+                      let canHold: boolean = checkIfCanHold(potentialObject, potentialLocation, state);
+                      console.log("canhold", canHold);
+                      if (canHold) {
+                          interpretation.push([
+                              { polarity: true, relation: "ontop", args: [potentialObject, potentialLocation] }
+                          ]);
+                      }
+                  }
               }
+              console.dir(interpretation);
+              if (interpretation.length === 0) {
+                console.log("return null");
+                return null;
+              }
+              return interpretation;
+            }else if(cmd.location.relation === "beside"){
+              for (let potentialObject of potentialObjects) {
+                  for (let potentialLocation of potentialLocations) {
+                      console.log("obj: ", potentialObject);
+                      console.log("loc: ", potentialLocation);
+                          interpretation.push([
+                              { polarity: true, relation: "ontop", args: [potentialObject, "" + potentialLocation] }
+                          ]);
+                  }
+              }
+              console.log(interpretation);
+              // if (interpretation.length === 0) {
+              //   console.log("return null");
+              //   return null;
+              // }
+              return interpretation;
             }
+        }
 
-          }
-
-
-        };
+        let objects: string[] = Array.prototype.concat.apply([], state.stacks);
+        let a: string = objects[Math.floor(Math.random() * objects.length)];
+        let b: string = objects[Math.floor(Math.random() * objects.length)];
+        interpretation = [[
+            { polarity: true, relation: "ontop", args: [a, "floor"] },
+            { polarity: true, relation: "holding", args: [b] }
+        ]];
         return interpretation;
+
+
+
+
     };
 
+    function checkIfFitIn(obj: any, inside: any, state: WorldState): boolean {
+        obj = state.objects[obj];
+        inside = state.objects[inside];
+        console.log("obj, inside", obj, inside);
+        //console.log("checkIfFitewfrerrererIn", state);
+
+
+        if (inside.form !== "box") {
+            console.log("not a box");
+            return false;
+        } else {
+            if (inside.size === "small") {
+            //    console.log("here");
+
+                if (obj.form === "ball") {
+                    return obj.size === "small";
+                } else {
+                    return false;
+                }
+            } else if (inside.size === "large") {
+              //  console.log("here2");
+                if (obj.form === "ball") {
+                //    console.log("large ball large box");
+                    return true;
+                } else {
+                    return obj.size === "small";
+                }
+            }
+        }
+        console.log("Shouldnt be here.. ");
+        return true;
+    }
+
+    function checkIfCanHold(obj: any, on: any, state: WorldState): boolean {
+        if(on === "floor") {
+          return true;
+        }
+        obj = state.objects[obj];
+        on = state.objects[on];
+        console.log("obj, on", obj, on);
+        if(on.form === "ball") {
+          return false;
+        }else if (on.size === "small" && obj.size === "large") {
+          return false;
+        }else if (obj.form === "box" && on.size === "small" && (on.form === "pyramid" || on.form === "brick")) {
+          return false;
+        }else if (obj.form === "box" && obj.size === "large" && on.form === "pyramid") {
+          return false;
+        }
+        return true;
+    }
+
+    function checkForm(obj: any, other: any): boolean {
+        let sameForm: boolean, sameColor: boolean, sameSize: boolean;
+
+        if (obj.form === 'anyform' || obj.form === null) {
+            sameForm = true;
+        } else {
+            sameForm = obj.form === other.form;
+        }
+        if (obj.color === null) {
+            sameColor = true;
+        } else {
+            sameColor = obj.color === other.color;
+        }
+        if (obj.size === null) {
+            sameSize = true;
+        } else {
+            sameSize = obj.size === other.size;
+        }
+        return sameColor && sameSize && sameForm;
+
+    };
+
+    function isInWorld(obj: string, state: WorldState): boolean {
+        let inWorld: boolean = false;
+        for (let stack of state.stacks) {
+            for (let object of stack) {
+                if (object === obj) {
+                    inWorld = true;
+                }
+            }
+        }
+        return inWorld;
+    };
+
+
+    function getObjectCords(obj: any, state: WorldState): any {
+        let stacks = state.stacks;
+        let objCords: any;
+        for (let i = 0; i < stacks.length; i++) {
+            for (let j = 0; j < stacks[i].length; j++) {
+                if (obj === stacks[i][j]) {
+                    return { "x": i, "y": j };
+                }
+            }
+        }
+    };
+
+    function checkIfBeside(obj: any, other: any, state: WorldState): any {
+        let objCords = getObjectCords(obj, state);
+        let otherCords = getObjectCords(other, state);
+        return objCords.y === otherCords.y &&
+            Math.abs(objCords.x - otherCords.x) === 1;
+    };
+
+    function checkIfInside(obj: any, other: any, state: WorldState): any {
+        if(other === "floor"){
+          return getObjectCords(obj, state).y === 0;
+        }
+        let objCords = getObjectCords(obj, state);
+        console.log("Inside", obj, other);
+        let otherCords = getObjectCords(other, state);
+        console.log(objCords.x === otherCords.x &&
+            objCords.y - otherCords.y === 1);
+        return objCords.x === otherCords.x &&
+            objCords.y - otherCords.y === 1;
+    };
+
+    // Check if obj is above other.
+    function checkIfAbove(obj: any, other: any, state: WorldState): any {
+        let objCords = getObjectCords(obj, state);
+        let otherCords = getObjectCords(other, state);
+        return objCords.x === otherCords.x &&
+            objCords.y > otherCords.y;
+    };
+
+
+
+    // var checkBasicObjects = (obj : Parser.Object) => {
+    //   // Base case. Check if the basic object exists.
+    //   if(object.object == null){
+    //     var exists = [];
+    //     state.objects.forEach((other) => {
+    //       if(obj.size == other.size && obj.location == other.location
+    //         && obj.color == other.color){
+    //           exists.push({
+    //           "name" :
+    //           });
+    //           // Save obj
+    //         }
+    //     });
+    //     if(!exists){
+    //       return exists;
+    //     }
+    //   }else{
+    //     var object = checkBasicObjects(obj.object);
+    //     var locationObj = checkBasicObjects(obj.location.entity.object);
+    //     if(obj.location.relation == 'beside'){
+    //       if(object.y == locationObj.y && object.x - locationObj == 1){
+    //         return object;
+    //       }
+    //     }
+    //
+    //   }
+    //
+    //
+    // };
+    // return interpretation;
 
 
 }
