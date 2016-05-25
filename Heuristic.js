@@ -45,7 +45,7 @@ function amountOntop(state, object1) {
                     foundObjectInStack = true;
                 }
             }
-            return objectsOnTop;
+            return objectsOnTop * 4;
         }
     }
 }

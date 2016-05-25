@@ -64,7 +64,10 @@ function amountOntop(state: WorldState, object1: string) : number {
                     foundObjectInStack = true;
                 }
             }
-            return objectsOnTop;
+            // Multiply by 4 because it is the lowest amount of moves ever
+            // possible for moving something from a stack and
+            // returning the claw to its original position
+            return objectsOnTop * 4;
         }
     }
 }
