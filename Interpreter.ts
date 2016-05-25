@@ -1,5 +1,6 @@
 ///<reference path="World.ts"/>
 ///<reference path="Parser.ts"/>
+///<reference path="lib/collections.ts"/>
 
 /**
 * Interpreter module
@@ -28,6 +29,7 @@ module Interpreter {
 
     //////////////////////////////////////////////////////////////////////
     // exported functions, classes and interfaces/types
+
 
     /**
     Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
@@ -112,9 +114,9 @@ module Interpreter {
             // Base case. Check if the basic object exists.
 
             if (obj.object == null) {
-                if(obj.form === "floor"){
-                  potentialObjects.push("floor");
-                  return potentialObjects;
+                if (obj.form === "floor") {
+                    potentialObjects.push("floor");
+                    return potentialObjects;
                 }
                 for (let stack of state.stacks) {
                     for (let worldObject of stack) {
@@ -158,7 +160,7 @@ module Interpreter {
                             }
                         } else if (relation === "ontop") {
                             if (checkIfInside(o, r, state)) {
-                              potentialObjects.push(o);
+                                potentialObjects.push(o);
                             }
                         }
                     }
@@ -202,56 +204,56 @@ module Interpreter {
                         console.log("fits", fits);
                         if (fits) {
                             let conjunction: Conjunction = [];
-                            let literal: Literal =   { polarity: true, relation: "inside", args: ["e", "k"] };
+                            let literal: Literal = { polarity: true, relation: "inside", args: ["e", "k"] };
                             conjunction.push(literal);
                             interpretation.push(conjunction);
                         }
                     }
                 }
                 if (interpretation.length === 0) {
-                  console.log("return null");
-                  return null;
+                    console.log("return null");
+                    return null;
                 }
                 console.dir(interpretation);
 
                 return interpretation;
 
-            }else if(cmd.location.relation === "ontop"){
-              for (let potentialObject of potentialObjects) {
-                  for (let potentialLocation of potentialLocations) {
-                      console.log("obj: ", potentialObject);
-                      console.log("loc: ", potentialLocation);
-                      let canHold: boolean = checkIfCanHold(potentialObject, potentialLocation, state);
-                      console.log("canhold", canHold);
-                      if (canHold) {
-                          interpretation.push([
-                              { polarity: true, relation: "ontop", args: [potentialObject, potentialLocation] }
-                          ]);
-                      }
-                  }
-              }
-              console.dir(interpretation);
-              if (interpretation.length === 0) {
-                console.log("return null");
-                return null;
-              }
-              return interpretation;
-            }else if(cmd.location.relation === "beside"){
-              for (let potentialObject of potentialObjects) {
-                  for (let potentialLocation of potentialLocations) {
-                      console.log("obj: ", potentialObject);
-                      console.log("loc: ", potentialLocation);
-                          interpretation.push([
-                              { polarity: true, relation: "ontop", args: [potentialObject, "" + potentialLocation] }
-                          ]);
-                  }
-              }
-              console.log(interpretation);
-              // if (interpretation.length === 0) {
-              //   console.log("return null");
-              //   return null;
-              // }
-              return interpretation;
+            } else if (cmd.location.relation === "ontop") {
+                for (let potentialObject of potentialObjects) {
+                    for (let potentialLocation of potentialLocations) {
+                        console.log("obj: ", potentialObject);
+                        console.log("loc: ", potentialLocation);
+                        let canHold: boolean = checkIfCanHold(potentialObject, potentialLocation, state);
+                        console.log("canhold", canHold);
+                        if (canHold) {
+                            interpretation.push([
+                                { polarity: true, relation: "ontop", args: [potentialObject, potentialLocation] }
+                            ]);
+                        }
+                    }
+                }
+                console.dir(interpretation);
+                if (interpretation.length === 0) {
+                    console.log("return null");
+                    return null;
+                }
+                return interpretation;
+            } else if (cmd.location.relation === "beside") {
+                for (let potentialObject of potentialObjects) {
+                    for (let potentialLocation of potentialLocations) {
+                        console.log("obj: ", potentialObject);
+                        console.log("loc: ", potentialLocation);
+                        interpretation.push([
+                            { polarity: true, relation: "ontop", args: [potentialObject, "" + potentialLocation] }
+                        ]);
+                    }
+                }
+                console.log(interpretation);
+                // if (interpretation.length === 0) {
+                //   console.log("return null");
+                //   return null;
+                // }
+                return interpretation;
             }
         }
 
@@ -281,7 +283,7 @@ module Interpreter {
             return false;
         } else {
             if (inside.size === "small") {
-            //    console.log("here");
+                //    console.log("here");
 
                 if (obj.form === "ball") {
                     return obj.size === "small";
@@ -289,9 +291,9 @@ module Interpreter {
                     return false;
                 }
             } else if (inside.size === "large") {
-              //  console.log("here2");
+                //  console.log("here2");
                 if (obj.form === "ball") {
-                //    console.log("large ball large box");
+                    //    console.log("large ball large box");
                     return true;
                 } else {
                     return obj.size === "small";
@@ -303,20 +305,20 @@ module Interpreter {
     }
 
     function checkIfCanHold(obj: any, on: any, state: WorldState): boolean {
-        if(on === "floor") {
-          return true;
+        if (on === "floor") {
+            return true;
         }
         obj = state.objects[obj];
         on = state.objects[on];
         console.log("obj, on", obj, on);
-        if(on.form === "ball") {
-          return false;
-        }else if (on.size === "small" && obj.size === "large") {
-          return false;
-        }else if (obj.form === "box" && on.size === "small" && (on.form === "pyramid" || on.form === "brick")) {
-          return false;
-        }else if (obj.form === "box" && obj.size === "large" && on.form === "pyramid") {
-          return false;
+        if (on.form === "ball") {
+            return false;
+        } else if (on.size === "small" && obj.size === "large") {
+            return false;
+        } else if (obj.form === "box" && on.size === "small" && (on.form === "pyramid" || on.form === "brick")) {
+            return false;
+        } else if (obj.form === "box" && obj.size === "large" && on.form === "pyramid") {
+            return false;
         }
         return true;
     }
@@ -376,8 +378,8 @@ module Interpreter {
     };
 
     function checkIfInside(obj: any, other: any, state: WorldState): any {
-        if(other === "floor"){
-          return getObjectCords(obj, state).y === 0;
+        if (other === "floor") {
+            return getObjectCords(obj, state).y === 0;
         }
         let objCords = getObjectCords(obj, state);
         console.log("Inside", obj, other);
@@ -429,5 +431,379 @@ module Interpreter {
     // };
     // return interpretation;
 
+}
+//Check that object1 can be right of object2
+var checkRightOf = function(object1: string, object2: string, state: WorldState): boolean {
+    return !(state.stacks[state.stacks.length].indexOf(object2) > -1) && object1 != object2;
+}
 
+function findObject(object: Parser.Object, state: WorldState): string[] {
+    //No more recursive objects
+    var tmp: string[] = [];
+    if (object.form == 'floor') {
+        tmp.push('floor');
+    }
+    if (object.object == undefined) {
+        //For all objects, find one matching
+        for (var obj in state.objects) {
+            var other = state.objects[obj];
+            if (validForm(object, other.form) && validSize(object, other.size) && validColor(object, other.color)) {
+                tmp.push(obj);
+            }
+        }
+    }
+    return tmp;
+}
+
+function validForm(object: Parser.Object, worldObject: string): boolean {
+    if (object.form == undefined || object.form == null || object.form == "anyform") {
+        return true;
+    }
+    return object.form == worldObject;
+}
+
+function validSize(object: Parser.Object, worldObject: string): boolean {
+    if (object.size == undefined || object.size == null) {
+        return true;
+    }
+    return object.size == worldObject;
+}
+
+function validColor(object: Parser.Object, worldObject: string): boolean {
+    if (object.color == null || object.color == undefined) {
+        return true;
+    }
+    return object.color == worldObject;
+}
+
+// Will return an array of strings that recursively corresponds to the objects of the node
+function getNodeObjects(node: any, state: WorldState): string[][] {
+    // Is location
+    if (node.entity && node.relation) {
+        return getLocationObjects(node, state);
+    }
+
+    // Is entity
+    if (node.quantifier && node.object) {
+        return getEntityObjects(node, state);
+    }
+
+    // Is complex object
+    if (node.location && node.object) {
+        return getComplexObject(node, state);
+    }
+
+    // Is simple object
+    var tmp: string[][] = [];
+    tmp.push(findObject(node, state));
+    return tmp;
+}
+
+function getObjectsLeftOf(entity: string[][], state: WorldState): string[][] {
+    // Return all objects left of the entites
+    var tmp: string[][] = [];
+    for (let k = 0; k < entity.length; k++) {
+        var innerTmp: string[] = [];
+        var distanceFromLeftAllowed = state.stacks.length - 1;
+        for (let i = distanceFromLeftAllowed; i >= 0; i--) {
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                    distanceFromLeftAllowed = i;
+                }
+            }
+        }
+        for (let i = 0; i < distanceFromLeftAllowed; i++) {
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                innerTmp.push(state.stacks[i][j]);
+            }
+        }
+        if (innerTmp.length > 0) {
+            tmp.push(innerTmp);
+        }
+    }
+    return tmp;
+}
+
+function getObjectsRightOf(entity: string[][], state: WorldState): string[][] {
+    // Return all objects right of the entites
+    var tmp: string[][] = [];
+    for (let k = 0; k < entity.length; k++) {
+        var innerTmp: string[] = [];
+        var distanceFromLeftAllowed = 0;
+        for (let i = 0; i < state.stacks.length; i++) {
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                    distanceFromLeftAllowed = i;
+                }
+            }
+        }
+        for (let i = distanceFromLeftAllowed; i < state.stacks.length; i++) {
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                innerTmp.push(state.stacks[i][j]);
+            }
+        }
+        if (innerTmp.length > 0) {
+            tmp.push(innerTmp);
+        }
+    }
+    return tmp;
+}
+
+function getObjectsInside(entity: string[][], state: WorldState): string[][] {
+    // Returns the objects that are inside all the entities
+
+    var tmp: string[][] = [];
+
+    for (let k = 0; k < entity.length; k++) {
+        var innerTmp: string[] = [];
+
+        // Check so that all entities are boxes
+        for (let i = 0; i < entity[k].length; i++) {
+            for (var key in state.objects) {
+                if (key == entity[k][i]) {
+                    if (state.objects[key].form != "box") {
+                        return tmp;
+                    }
+                }
+            }
+        }
+
+        // TODO: Right now this only handles one box
+        for (let i = 0; i < state.stacks.length; i++) {
+            var boxFound = "";
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                var object = state.stacks[i][j];
+                if (boxFound != "") {
+                    // Check if item is eligble to fit in the box
+                    if (checkOnTopOf(state.stacks[i][j], boxFound, state)) {
+                        innerTmp.push(state.stacks[i][j]);
+                    }
+                    boxFound = "";
+                } else {
+                    // Check if current object is in our entity, save it if it is
+                    if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                        boxFound = state.stacks[i][j];
+                    }
+                }
+            }
+        }
+        if (innerTmp.length > 0) {
+            tmp.push(innerTmp);
+        }
+    }
+    return tmp;
+}
+
+function getObjectsOntop(entity: string[][], state: WorldState): string[][] {
+    // Returns objects directly on top of entity (will not work for more than one entity)
+
+    var tmp: string[][] = [];
+
+    for (let k = 0; k < entity.length; k++) {
+        var innerTmp: string[] = [];
+        if (entity[k].length != 1) {
+            continue;
+        }
+        for (let i = 0; i < state.stacks.length; i++) {
+            if (entity[0][0] == 'floor') {
+                if (state.stacks[i][0]) {
+                    innerTmp.push(state.stacks[i][0]);
+                }
+            } else {
+                for (let j = 0; j < state.stacks[i].length; j++) {
+                    if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                        if (state.stacks[i][j + 1]) {
+                            innerTmp.push(state.stacks[i][j + 1]);
+                        }
+                    }
+                }
+            }
+        }
+        if (innerTmp.length > 0) {
+            tmp.push(innerTmp);
+        }
+    }
+    return tmp;
+}
+
+function getObjectsUnder(entity: string[][], state: WorldState): string[][] {
+    // Returns objects under (not just directly under) the entites
+
+    var tmp: string[][] = [];
+
+    for (let k = 0; k < entity.length; k++) {
+        var innerTmp: string[] = [];
+
+        // Checks so that all are in same stack and returns what is under
+        for (let i = 0; i < state.stacks.length; i++) {
+            var count = 0;
+            var nbrOfEntities = entity[k].length;
+            for (let j = state.stacks[i].length - 1; j >= 0; j--) {
+                if (nbrOfEntities == count) {
+                    // All entities was in this stack, start pushing what objects remain above
+                    innerTmp.push(state.stacks[i][j]);
+                } else {
+                    if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                        count = count + 1;
+                    }
+                }
+            }
+        }
+        if (innerTmp.length > 0) {
+            tmp.push(innerTmp);
+        }
+    }
+    return tmp;
+}
+
+function getObjectsBeside(entity: string[][], state: WorldState): string[][] {
+    // Return all objects beside the entity
+
+    var tmp: string[][] = [];
+
+    for (let k = 0; k < entity.length; k++) {
+        var innerTmp: string[] = [];
+
+        var columnsWithEntities: number[] = [];
+
+        // Finds columns which has entities inside them and
+        // fills columnsWithEntities accordingly
+        for (let i = 0; i < state.stacks.length; i++) {
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                    columnsWithEntities.push(i);
+                    break;
+                }
+            }
+        }
+
+        // Adds the entities in the "allowed" rows
+        for (let i = 0; i < state.stacks.length; i++) {
+            if (columnsWithEntities.indexOf(i) >= 0) {
+                if (i > 0) {
+                    for (let j = 0; j < state.stacks[i - 1].length; j++) {
+                        innerTmp.push(state.stacks[i - 1][j]);
+                    }
+                }
+                if (i < state.stacks.length - 2) {
+                    for (let j = 0; j < state.stacks[i + 1].length; j++) {
+                        innerTmp.push(state.stacks[i + 1][j]);
+                    }
+                }
+            }
+        }
+        if (innerTmp.length > 0) {
+            tmp.push(innerTmp);
+        }
+    }
+    return tmp;
+}
+
+function getObjectsAbove(entity: string[][], state: WorldState): string[][] {
+    // Returns objects above (not just directly above) the entites
+
+    var tmp: string[][] = [];
+
+    for (let k = 0; k < entity.length; k++) {
+        var innerTmp: string[] = [];
+
+        // Checks so that all are in same stack and returns what is above
+        for (let i = 0; i < state.stacks.length; i++) {
+            var count = 0;
+            var nbrOfEntities = entity[k].length;
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                if (nbrOfEntities == count) {
+                    // All entities was in this stack, start pushing what objects remain above
+                    innerTmp.push(state.stacks[i][j]);
+                } else {
+                    if (entity[k].indexOf(state.stacks[i][j]) > -1) {
+                        count = count + 1;
+                    }
+                }
+            }
+        }
+        if (innerTmp.length > 0) {
+            tmp.push(innerTmp);
+        }
+    }
+    return tmp;
+}
+
+function getLocationObjects(node: any, state: WorldState): string[][] {
+    var entity = getNodeObjects(node.entity, state);
+
+    if (node.relation == "leftof") {
+        return getObjectsLeftOf(entity, state);
+    } else if (node.relation == "rightof") {
+        return getObjectsRightOf(entity, state);
+    } else if (node.relation == "inside") {
+        return getObjectsInside(entity, state);
+    } else if (node.relation == "ontop") {
+        return getObjectsOntop(entity, state);
+    } else if (node.realtion == "under") {
+        return getObjectsUnder(entity, state);
+    } else if (node.relation == "beside") {
+        return getObjectsBeside(entity, state);
+    } else if (node.relation == "above") {
+        return getObjectsAbove(entity, state);
+    }
+    return [];
+}
+
+function getEntityObjects(node: any, state: WorldState): string[][] {
+    var entity = getNodeObjects(node.object, state);
+    if (node.quantifier == "the") {
+        if (entity.length == 1 && entity[0].length == 1) {
+            return entity;
+        } else {
+            return [];
+        }
+    } else if (node.quantifier == "any") {
+        // Returns first value from collection
+        var tmp: string[][] = [];
+
+        for (let i = 0; i < entity.length; i++) {
+            // For each outer list, split it up in ORs
+            for (let j = 0; j < entity[i].length; j++) {
+                var innerTmp: string[] = [];
+                innerTmp.push(entity[i][j]);
+                tmp.push(innerTmp);
+            }
+        }
+        return tmp;
+    } else if (node.quantifier == "all") {
+        // Returns whole collection
+        return entity;
+    }
+    return [];
+}
+
+function getComplexObject(node: any, state: WorldState): string[][] {
+    var objects = getNodeObjects(node.object, state);
+    var concatObjects: string[] = Array.prototype.concat.apply([], objects);
+    var location = getNodeObjects(node.location, state);
+    for (let i = 0; i < location.length; i++) {
+        for (let j = 0; j < location[i].length; j++) {
+            if (concatObjects.indexOf(location[i][j]) == -1) {
+                location[i].splice(j, 1);
+            }
+        }
+    }
+    return location;
+}
+
+function removeObjectsNotInStacks(state: WorldState) {
+    // This removes all the objects in the state which is not in the stacks
+    var objectExists: boolean = false;
+    for (var obj in state.objects) {
+        objectExists = false;
+        for (var id in state.stacks) {
+            if (state.stacks[id].indexOf(obj) > -1) {
+                objectExists = true;
+            }
+        }
+        if (!objectExists) {
+            delete state.objects[obj];
+        }
+    }
 }
