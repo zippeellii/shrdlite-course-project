@@ -29,6 +29,38 @@ function heuristicUnder(state, object1, object2) {
 function heuristicLeftOf(state, object1, object2) {
 }
 function heuristicRightOf(state, object1, object2) {
+    var result = 0;
+    var firstIndex = -1;
+    var secondIndex = -1;
+    if (state.holding === object1) {
+        firstIndex = state.arm;
+    }
+    else {
+        for (var i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                firstIndex = i;
+                break;
+            }
+        }
+    }
+    if (state.holding === object2) {
+        secondIndex = state.arm;
+    }
+    else {
+        for (var i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                secondIndex = i;
+                break;
+            }
+        }
+    }
+    if (firstIndex > secondIndex) {
+        return 0;
+    }
+    else {
+        result = (secondIndex + 1) - firstIndex;
+        return result + 1;
+    }
 }
 function heuristicBeside(state, object1, object2) {
     var result = 0;

@@ -91,7 +91,42 @@ function heuristicLeftOf(state: WorldState, object1: string, object2: string){
 }
 //Heuristic if object1 should be to the right of object2
 function heuristicRightOf(state: WorldState, object1: string, object2: string){
-    // distance between rightof and object1
+    var result = 0;
+    var firstIndex = -1;
+    var secondIndex = -1;
+
+    // Finds index of object1 regardless of if it is held
+    if (state.holding === object1) {
+        firstIndex = state.arm;
+    } else {
+        for (let i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                firstIndex = i;
+                break;
+            }
+        }
+    }
+
+    // Finds index of object2 regardless of if it is held
+    if (state.holding === object2) {
+        secondIndex = state.arm;
+    } else {
+        for (let i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                secondIndex = i;
+                break;
+            }
+        }
+    }
+
+    // TODO: Theese two returns could think of whether we hold something or not, and +1 accordingly
+    if (firstIndex > secondIndex) {
+        return 0;
+    } else {
+        result = (secondIndex + 1) - firstIndex;
+        // Add one for dropping
+        return result + 1;
+    }
 }
 
 //Heuristic if object1 should be beside object2
