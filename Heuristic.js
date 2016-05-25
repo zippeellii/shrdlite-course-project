@@ -39,12 +39,12 @@ function heuristicAbove(state, object1, object2) {
         return 0;
     }
     if (state.holding === object1) {
-        return distanceFromArm(state, object2);
+        return distanceFromArm(state, object2) + 1;
     }
     if (state.holding === object2) {
-        return distanceFromArm(state, object1);
+        return distanceFromArm(state, object1) + amountOntop(state, object1) + 3;
     }
-    return horizontal + amountOntop(state, object1);
+    return horizontal + amountOntop(state, object1) + 2;
 }
 function heuristicUnder(state, object1, object2) {
     var horizontal = distanceBetweenObjects(state, object1, object2);
@@ -52,12 +52,12 @@ function heuristicUnder(state, object1, object2) {
         return 0;
     }
     if (state.holding === object1) {
-        return distanceFromArm(state, object2);
+        return distanceFromArm(state, object2) + amountOntop(state, object2) + 3;
     }
     if (state.holding === object2) {
-        return distanceFromArm(state, object1);
+        return distanceFromArm(state, object1) + 1;
     }
-    return horizontal + amountOntop(state, object2);
+    return horizontal + amountOntop(state, object2) + 2;
 }
 function heuristicLeftOf(state, object1, object2) {
     var result = 0;

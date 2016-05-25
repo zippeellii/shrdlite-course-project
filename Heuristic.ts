@@ -26,9 +26,9 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
     return totLength;
 }
 
-//Heuristic if object1 should be onTopOf(inside) object2
-function heuristicOnTopOf(state: WorldState, object1: string, object2: string){
-    //TODO: Check if in the same stack, should calculate something
+//Heuristic if object1 should be onTopOf(inside) object2                                          // TODO: Funkar inte med ALL ON FLOOR, resten går
+function heuristicOnTopOf(state: WorldState, object1: string, object2: string){                   // Kolla med jonte så att det inte går med onTop med
+    //TODO: Check if in the same stack, should calculate something                                // flera i subjekt och/eller predikat
     let totalCost = 0;
     //Distance between the objects
     let horizontal = distanceBetweenObjects(state, object1, object2);
@@ -47,7 +47,7 @@ function heuristicOnTopOf(state: WorldState, object1: string, object2: string){
     //Add +2 for take and drop
     return totalCost + 2;
 }
-//Heuristic if object1 should be above object2
+//Heuristic if object1 should be above object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
 function heuristicAbove(state: WorldState, object1: string, object2: string){
     //TODO: Can be optimized, u know
     let horizontal = distanceBetweenObjects(state, object1, object2);
@@ -85,7 +85,7 @@ function heuristicUnder(state: WorldState, object1: string, object2: string){
     //Add two for picking up and dropping object2
     return horizontal + amountOntop(state, object2) + 2;
 }
-//Heuristic if object1 should be to the left of object2
+//Heuristic if object1 should be to the left of object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
 function heuristicLeftOf(state: WorldState, object1: string, object2: string){
     var result = 0;
     var firstIndex = -1;
@@ -137,7 +137,7 @@ function heuristicLeftOf(state: WorldState, object1: string, object2: string){
     }
 }
 
-//Heuristic if object1 should be to the right of object2
+//Heuristic if object1 should be to the right of object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
 function heuristicRightOf(state: WorldState, object1: string, object2: string){
     var result = 0;
     var firstIndex = -1;
@@ -189,7 +189,7 @@ function heuristicRightOf(state: WorldState, object1: string, object2: string){
     }
 }
 
-//Heuristic if object1 should be beside object2
+//Heuristic if object1 should be beside object2                                          // TODO: Blir fel med flera i subjekt och/eller predikat
 function heuristicBeside(state: WorldState, object1: string, object2: string){
     var result = 0;
 
