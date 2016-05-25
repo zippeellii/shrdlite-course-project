@@ -132,24 +132,23 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         if (cmd.location) {
           var locationObjects = getNodeObjects(cmd.location.entity, state);
           for(var i = 0; i < locationObjects.length; i++){
-            for(var j = 0; j < locationObjects[i].length; j++){
-              for(var k = 0; k < entityObjects.length; k++){
-                var conjCommands : Literal[] = [];
-                var isPossible = true;
-                for(var l = 0; l < entityObjects[k].length; l++){
-                  if(physicFunctionsMap.getValue(cmd.location.relation)(entityObjects[k][l], locationObjects[i][j], state)){
-                    conjCommands.push({polarity: true, relation: cmd.location.relation, args: [entityObjects[k][l], locationObjects[i][j]]});
+              for(var j = 0; j < entityObjects.length; j++){
+                  var conjCommands : Literal[] = [];
+                  var isPossible = true;
+                  for(var k = 0; k < locationObjects[i].length; k++){
+                      for(var p = 0; p < entityObjects[j].length; p++){
+                          if(physicFunctionsMap.getValue(cmd.location.relation)(entityObjects[j][p], locationObjects[i][k], state)){
+                            conjCommands.push({polarity: true, relation: cmd.location.relation, args: [entityObjects[j][p], locationObjects[i][k]]});
+                          }
+                          else{
+                              isPossible = false;
+                          }
+                      }
                   }
-                  else{
-                    isPossible = false;
+                  if(conjCommands.length != 0 && isPossible){
+                    interpretation.push(conjCommands);
                   }
-                }
-                //If conjunction of commands exist, push it
-                if(conjCommands.length != 0 && isPossible){
-                  interpretation.push(conjCommands);
-                }
               }
-            }
           }
         }
         else{
