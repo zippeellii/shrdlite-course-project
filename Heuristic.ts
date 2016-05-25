@@ -13,17 +13,14 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
     var totLength = Number.MAX_VALUE;
     for (let i = 0; i < interpretation.length; i++) {
         var length = 0;
-        for (let j = 0; j < interpretation[i].length; j++) {
-            let object1 = interpretation[i][j].args[0];
-            let object2 = interpretation[i][j].args[1];
-            let relation = interpretation[i][j].relation;
-            if(relation === 'holding'){
-                length += heuristicHolding(state, object1);
-            }
-            else{
-                length += heuristicFunctions.getValue(relation)(state, object1, object2);
-            }
+        var relation = interpretation[i][0].relation;
+        var literals = interpretation[i];
+        if (interpretation[i][0].relation == 'holding') {
+            length = heuristicHolding(state, literals);
+        } else {
+            length = heuristicFunctions.getValue(relation)(state, literals);
         }
+
         //Overwrite if the new length is shorter
         totLength = length < totLength ? length : totLength;
     }
@@ -31,9 +28,9 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
     return totLength;
 }
 
-//Heuristic if object1 should be onTopOf(inside) object2                                          // TODO: Funkar inte med ALL ON FLOOR, resten går
-function heuristicOnTopOf(state: WorldState, object1: string, object2: string){                   // Kolla med jonte så att det inte går med onTop med
-    //TODO: Check if in the same stack, should calculate something                                // flera i subjekt och/eller predikat
+//Heuristic if object1 should be onTopOf(inside) object2
+function heuristicOnTopOf(state: WorldState, object1: string, object2: string){
+    //TODO: Check if in the same stack, should calculate something
     let totalCost = 0;
     //Distance between the objects
     let horizontal = distanceBetweenObjects(state, object1, object2);
@@ -43,8 +40,6 @@ function heuristicOnTopOf(state: WorldState, object1: string, object2: string){ 
     }
     //Add the distance plus the movement of any possible objects already on top of 2
     totalCost = horizontal + amountOntop(state, object2);
-    console.log("HORIZONTAL: ", horizontal);
-    console.log("AMOUNT ON TOP: ", totalCost - horizontal);
     //Arm is already holding object, i.e only need to drop
     if(state.holding === object1){
         return totalCost + 1;
@@ -231,9 +226,10 @@ function heuristicBeside(state: WorldState, object1: string, object2: string){
 }
 
 //Heuristic if the arm should hold object1
-function heuristicHolding(state: WorldState, object1: string){
+function heuristicHolding(state: WorldState, literals : Interpreter.Literal[]) {
     var result = 0;
-    if (state.holding === object1) {
+    var theObject = literals[0].args[0];
+    if (state.holding === theObject) {
         return result;
     }
     if (state.holding != null && state.holding != undefined) {
@@ -242,8 +238,8 @@ function heuristicHolding(state: WorldState, object1: string){
     }
 
     // Move arm into position and remove objects on top
-    var armResult = distanceFromArm(state, object1);
-    var ontopResult = amountOntop(state, object1);
+    var armResult = distanceFromArm(state, theObject);
+    var ontopResult = amountOntop(state, theObject);
     return result + armResult + ontopResult + 1;
 }
 

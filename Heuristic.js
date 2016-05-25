@@ -10,16 +10,13 @@ function evalHeuristic(interpretation, state) {
     var totLength = Number.MAX_VALUE;
     for (var i = 0; i < interpretation.length; i++) {
         var length = 0;
-        for (var j = 0; j < interpretation[i].length; j++) {
-            var object1 = interpretation[i][j].args[0];
-            var object2 = interpretation[i][j].args[1];
-            var relation = interpretation[i][j].relation;
-            if (relation === 'holding') {
-                length += heuristicHolding(state, object1);
-            }
-            else {
-                length += heuristicFunctions.getValue(relation)(state, object1, object2);
-            }
+        var relation = interpretation[i][0].relation;
+        var literals = interpretation[i];
+        if (interpretation[i][0].relation == 'holding') {
+            length = heuristicHolding(state, literals);
+        }
+        else {
+            length = heuristicFunctions.getValue(relation)(state, literals);
         }
         totLength = length < totLength ? length : totLength;
     }
@@ -32,8 +29,6 @@ function heuristicOnTopOf(state, object1, object2) {
         return 0;
     }
     totalCost = horizontal + amountOntop(state, object2);
-    console.log("HORIZONTAL: ", horizontal);
-    console.log("AMOUNT ON TOP: ", totalCost - horizontal);
     if (state.holding === object1) {
         return totalCost + 1;
     }
@@ -173,16 +168,17 @@ function heuristicBeside(state, object1, object2) {
     }
     return result + 2;
 }
-function heuristicHolding(state, object1) {
+function heuristicHolding(state, literals) {
     var result = 0;
-    if (state.holding === object1) {
+    var theObject = literals[0].args[0];
+    if (state.holding === theObject) {
         return result;
     }
     if (state.holding != null && state.holding != undefined) {
         result = result + 1;
     }
-    var armResult = distanceFromArm(state, object1);
-    var ontopResult = amountOntop(state, object1);
+    var armResult = distanceFromArm(state, theObject);
+    var ontopResult = amountOntop(state, theObject);
     return result + armResult + ontopResult + 1;
 }
 function distanceBetweenObjects(state, object1, object2) {
