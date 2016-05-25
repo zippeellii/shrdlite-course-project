@@ -52,6 +52,19 @@ function distance(state: WorldState, object1: string, object2: string) : number 
 
 // Moves needed to remove everything ontop of an object
 function amountOntop(state: WorldState, object1: string) : number {
-    //TODO
-    return 0;
+    var objectsOnTop = 0;
+    for (let i = 0; i < state.stacks.length; i++) {
+        if (state.stacks[i].indexOf(object1) > -1) {
+            var foundObjectInStack = false;
+            for (let j = 0; j < state.stacks[i].length; j++) {
+                if (foundObjectInStack) {
+                    objectsOnTop = objectsOnTop + 1;
+                }
+                if (state.stacks[i][j] === object1) {
+                    foundObjectInStack = true;
+                }
+            }
+            return objectsOnTop;
+        }
+    }
 }

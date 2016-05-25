@@ -33,5 +33,19 @@ function distance(state, object1, object2) {
     return -1;
 }
 function amountOntop(state, object1) {
-    return 0;
+    var objectsOnTop = 0;
+    for (var i = 0; i < state.stacks.length; i++) {
+        if (state.stacks[i].indexOf(object1) > -1) {
+            var foundObjectInStack = false;
+            for (var j = 0; j < state.stacks[i].length; j++) {
+                if (foundObjectInStack) {
+                    objectsOnTop = objectsOnTop + 1;
+                }
+                if (state.stacks[i][j] === object1) {
+                    foundObjectInStack = true;
+                }
+            }
+            return objectsOnTop;
+        }
+    }
 }
