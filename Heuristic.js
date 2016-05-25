@@ -21,19 +21,53 @@ function evalHeuristic(interpretation, state) {
     return totLength;
 }
 function heuristicOnTopOf(state, object1, object2) {
+    var totalCost = 0;
+    var horizontal = distanceBetweenObjects(state, object1, object2);
+    if (horizontal === 0) {
+        return 0;
+    }
+    totalCost = horizontal + amountOntop(state, object2);
+    if (state.holding === object1) {
+        return totalCost + 1;
+    }
+    totalCost += amountOntop(state, object1);
+    return totalCost + 2;
 }
 function heuristicAbove(state, object1, object2) {
+    var horizontal = distanceBetweenObjects(state, object1, object2);
+    if (horizontal === 0) {
+        return 0;
+    }
+    if (state.holding === object1) {
+        return distanceFromArm(state, object2);
+    }
+    if (state.holding === object2) {
+        return distanceFromArm(state, object1);
+    }
+    return horizontal + amountOntop(state, object1);
 }
 function heuristicUnder(state, object1, object2) {
+    var horizontal = distanceBetweenObjects(state, object1, object2);
+    if (horizontal === 0) {
+        return 0;
+    }
+    if (state.holding === object1) {
+        return distanceFromArm(state, object2);
+    }
+    if (state.holding === object2) {
+        return distanceFromArm(state, object1);
+    }
+    return horizontal + amountOntop(state, object2);
 }
 function heuristicLeftOf(state, object1, object2) {
-}
-function heuristicRightOf(state, object1, object2) {
     var result = 0;
     var firstIndex = -1;
+    var holdingFirst = false;
     var secondIndex = -1;
+    var holdingSecond = false;
     if (state.holding === object1) {
         firstIndex = state.arm;
+        holdingFirst = true;
     }
     else {
         for (var i = 0; i < state.stacks.length; i++) {
@@ -45,6 +79,51 @@ function heuristicRightOf(state, object1, object2) {
     }
     if (state.holding === object2) {
         secondIndex = state.arm;
+        holdingSecond = true;
+    }
+    else {
+        for (var i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                secondIndex = i;
+                break;
+            }
+        }
+    }
+    if (firstIndex < secondIndex) {
+        if (holdingFirst || holdingSecond) {
+            return 1;
+        }
+        return 0;
+    }
+    else {
+        result = firstIndex - (secondIndex - 1);
+        if (holdingFirst || holdingSecond) {
+            return result + 1;
+        }
+        return result + 2;
+    }
+}
+function heuristicRightOf(state, object1, object2) {
+    var result = 0;
+    var firstIndex = -1;
+    var holdingFirst = false;
+    var secondIndex = -1;
+    var holdingSecond = false;
+    if (state.holding === object1) {
+        firstIndex = state.arm;
+        holdingFirst = true;
+    }
+    else {
+        for (var i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                firstIndex = i;
+                break;
+            }
+        }
+    }
+    if (state.holding === object2) {
+        secondIndex = state.arm;
+        holdingSecond = true;
     }
     else {
         for (var i = 0; i < state.stacks.length; i++) {
@@ -55,11 +134,17 @@ function heuristicRightOf(state, object1, object2) {
         }
     }
     if (firstIndex > secondIndex) {
+        if (holdingFirst || holdingSecond) {
+            return 1;
+        }
         return 0;
     }
     else {
         result = (secondIndex + 1) - firstIndex;
-        return result + 1;
+        if (holdingFirst || holdingSecond) {
+            return result + 1;
+        }
+        return result + 2;
     }
 }
 function heuristicBeside(state, object1, object2) {

@@ -82,17 +82,16 @@ function heuristicUnder(state: WorldState, object1: string, object2: string){
 }
 //Heuristic if object1 should be to the left of object2
 function heuristicLeftOf(state: WorldState, object1: string, object2: string){
-    // distance between leftof and object1
-}
-//Heuristic if object1 should be to the right of object2
-function heuristicRightOf(state: WorldState, object1: string, object2: string){
     var result = 0;
     var firstIndex = -1;
+    var holdingFirst = false;
     var secondIndex = -1;
+    var holdingSecond = false;
 
     // Finds index of object1 regardless of if it is held
     if (state.holding === object1) {
         firstIndex = state.arm;
+        holdingFirst = true;
     } else {
         for (let i = 0; i < state.stacks.length; i++) {
             if (state.stacks[i].indexOf(object1) > -1) {
@@ -105,6 +104,7 @@ function heuristicRightOf(state: WorldState, object1: string, object2: string){
     // Finds index of object2 regardless of if it is held
     if (state.holding === object2) {
         secondIndex = state.arm;
+        holdingSecond = true;
     } else {
         for (let i = 0; i < state.stacks.length; i++) {
             if (state.stacks[i].indexOf(object1) > -1) {
@@ -114,13 +114,73 @@ function heuristicRightOf(state: WorldState, object1: string, object2: string){
         }
     }
 
-    // TODO: Theese two returns could think of whether we hold something or not, and +1 accordingly
-    if (firstIndex > secondIndex) {
+    if (firstIndex < secondIndex) {
+        if (holdingFirst || holdingSecond) {
+            // Add one for dropping
+            return 1;
+        }
         return 0;
     } else {
+        // Distance from first to exactly one step right of second
+        result = firstIndex - (secondIndex - 1);
+        if (holdingFirst || holdingSecond) {
+            // Add one for dropping
+            return result + 1;
+        }
+        // Add two for pick up and drop
+        return result + 2;
+    }
+}
+
+//Heuristic if object1 should be to the right of object2
+function heuristicRightOf(state: WorldState, object1: string, object2: string){
+    var result = 0;
+    var firstIndex = -1;
+    var holdingFirst = false;
+    var secondIndex = -1;
+    var holdingSecond = false;
+
+    // Finds index of object1 regardless of if it is held
+    if (state.holding === object1) {
+        firstIndex = state.arm;
+        holdingFirst = true;
+    } else {
+        for (let i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                firstIndex = i;
+                break;
+            }
+        }
+    }
+
+    // Finds index of object2 regardless of if it is held
+    if (state.holding === object2) {
+        secondIndex = state.arm;
+        holdingSecond = true;
+    } else {
+        for (let i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(object1) > -1) {
+                secondIndex = i;
+                break;
+            }
+        }
+    }
+
+    if (firstIndex > secondIndex) {
+        if (holdingFirst || holdingSecond) {
+            // Add one for dropping
+            return 1;
+        }
+        return 0;
+    } else {
+        // Distance from first to exactly one step right of second
         result = (secondIndex + 1) - firstIndex;
-        // Add one for dropping
-        return result + 1;
+        if (holdingFirst || holdingSecond) {
+            // Add one for dropping
+            return result + 1;
+        }
+        // Add two for pick up and drop
+        return result + 2;
     }
 }
 
