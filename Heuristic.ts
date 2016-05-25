@@ -1,3 +1,31 @@
+var heuristicFunctions = new collections.Dictionary<string, Function>();
+heuristicFunctions.setValue('inside', heuristicOnTopOf);
+heuristicFunctions.setValue('above', heuristicAbove);
+heuristicFunctions.setValue('under', heuristicUnder);
+heuristicFunctions.setValue('leftof', heuristicLeftOf);
+heuristicFunctions.setValue('rightof', heuristicRightOf);
+heuristicFunctions.setValue('beside', heuristicBeside);
+heuristicFunctions.setValue('ontop', heuristicOnTopOf);
+
+/*Wrapper function for handling heuristic calculation, responsible for
+sending the evaluation to the correct heuristic*/
+function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldState) : number {
+    var totLength = Number.MAX_VALUE;
+    for (let i = 0; i < interpretation.length; i++) {
+        var length = 0;
+        for (let j = 0; j < interpretation[i].length; j++) {
+            let object1 = interpretation[i][j].args[0];
+            let object2 = interpretation[i][j].args[1];
+            let relation = interpretation[i][j].relation;
+            length += heuristicFunctions.getValue(relation)(state, object1, object2);
+        }
+        //Overwrite if the new length is shorter
+        totLength = length < totLength ? length : totLength;
+    }
+    //Handle the calling here
+    return totLength;
+}
+
 //Heuristic if object1 should be onTopOf(inside) object2
 function heuristicOnTopOf(state: WorldState, object1: string, object2: string){
     // distance plus smallest of (remove all above object1) and (remove all above object2)
