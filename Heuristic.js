@@ -31,6 +31,23 @@ function heuristicLeftOf(state, object1, object2) {
 function heuristicRightOf(state, object1, object2) {
 }
 function heuristicBeside(state, object1, object2) {
+    var result = 0;
+    if (state.holding === object1) {
+        result = distanceFromArm(state, object2) - 1;
+        return result + 1;
+    }
+    if (state.holding === object2) {
+        result = distanceFromArm(state, object1) - 1;
+        return result + 1;
+    }
+    result = result + distanceBetweenObjects(state, object1, object2) - 1;
+    if (result === -1) {
+        return 2;
+    }
+    else if (result === 0) {
+        return result;
+    }
+    return result + 2;
 }
 function heuristicHolding(state, object1) {
     var result = 0;
@@ -46,7 +63,7 @@ function heuristicHolding(state, object1) {
         return result + armResult + ontopResult + 1;
     }
 }
-function distance(state, object1, object2) {
+function distanceBetweenObjects(state, object1, object2) {
     var indexFrom = -1;
     var indexTo = -1;
     for (var i = 0; i < state.stacks.length; i++) {
