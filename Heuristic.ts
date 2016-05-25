@@ -90,25 +90,38 @@ function heuristicOnTopOf(state: WorldState, literals: Interpreter.Literal[]){
 }
 
 //Heuristic if object1 should be above object2
-function heuristicAbove(state: WorldState, object1: string, object2: string){
+function heuristicAbove(state: WorldState, literals: Interpreter.Literal[]){
     //TODO: Can be optimized, u know
-    let horizontal = distanceBetweenObjects(state, object1, object2);
-    //Objects are already in same stack or object1 is being held by arm
-    if(horizontal === 0){
-        return 0;
+    var freeCost = 0;
+    var shortestDistance = Number.MAX_VALUE;
+    var leastMoveCounter = 0;
+    for (let k = 0; k < literals.length; k++) {
+        for (let i = 0; i < state.stacks.length; i++) {
+            if(state.stacks[i].indexOf(literals[k].args[1]) > -1){
+                continue;
+            }
+            for (let j = state.stacks[i].length-1; j >=0; j--) {
+                    //Found the object in the stack
+                    if(state.stacks[i][j] === literals[k].args[0]){
+                        //Is the distance shorter?
+                        let newDist = distanceBetweenObjects(state,literals[k].args[0], literals[k].args[1]);
+                        if(state.holding === literals[k].args[1]){
+                            newDist = distanceFromArm(state, literals[k].args[0]);
+                        }
+                        shortestDistance = shortestDistance > newDist ? newDist : shortestDistance;
+                        freeCost += amountOntop(state, state.stacks[i][j]);
+                        //Object that is not already above must be lifted, moved and dropped
+                        leastMoveCounter += 3;
+                        break;
+                    }
+            }
+        }
     }
-    //Holding object1
-    if(state.holding === object1){
-        //Add one for dropping
-        return distanceFromArm(state, object2) + 1;
+    //Found no shortest distance (probably holding object2)
+    if(shortestDistance === Number.MAX_VALUE) {
+        shortestDistance = 1;
     }
-    //Holding object2
-    if(state.holding === object2){
-        //Add three for dropping object2 and picking up and drop object1
-        return distanceFromArm(state, object1)+ amountOntop(state, object1) + 3;
-    }
-    //Remove all objects above object1 and move it
-    return horizontal + amountOntop(state, object1)+2;
+    return freeCost + shortestDistance + leastMoveCounter;
 }
 //Heuristic if object1 should be under object2
 function heuristicUnder(state: WorldState, object1: string, object2: string){
