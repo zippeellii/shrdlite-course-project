@@ -22,18 +22,39 @@ function evalHeuristic(interpretation, state) {
     }
     return minLength;
 }
-function heuristicOnTopOf(state, object1, object2) {
-    var totalCost = 0;
-    var horizontal = distanceBetweenObjects(state, object1, object2);
-    if (horizontal === 0) {
-        return 0;
+function heuristicOnTopOf(state, literals) {
+    if (literals.length == 1) {
+        var firstObject = literals[0].args[0];
+        var secondObject = literals[0].args[1];
+        var totalCost = 0;
+        var horizontal = distanceBetweenObjects(state, firstObject, secondObject);
+        if (horizontal === 0) {
+            return 0;
+        }
+        totalCost = horizontal + amountOntop(state, secondObject);
+        if (state.holding === firstObject) {
+            return totalCost + 1;
+        }
+        totalCost += amountOntop(state, firstObject);
+        return totalCost + 2;
     }
-    totalCost = horizontal + amountOntop(state, object2);
-    if (state.holding === object1) {
-        return totalCost + 1;
+    var stacksAlreadyManipulated = [];
+    var result = 0;
+    for (var i = 0; i < literals.length; i++) {
+        var firstObject = literals[i].args[0];
+        for (var j = 0; j < state.stacks.length; j++) {
+            for (var k = 0; k < state.stacks[j].length; k++) {
+                if (state.stacks[j][k] == firstObject) {
+                    if (k != 0 && stacksAlreadyManipulated.indexOf(j) < 0) {
+                        stacksAlreadyManipulated.push(j);
+                        result = result + amountOntop(state, firstObject);
+                        result = result + 2;
+                    }
+                }
+            }
+        }
     }
-    totalCost += amountOntop(state, object1);
-    return totalCost + 2;
+    return result;
 }
 function heuristicAbove(state, object1, object2) {
     var horizontal = distanceBetweenObjects(state, object1, object2);

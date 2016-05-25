@@ -6,7 +6,7 @@
     // Plussa på minsta distansen som inte är noll
         // Plussa på 3 för varje som inte ligger där de ska
 
-// If under,
+// If under, ?????
 
 var heuristicFunctions = new collections.Dictionary<string, Function>();
 heuristicFunctions.setValue('inside', heuristicOnTopOf);
@@ -39,26 +39,56 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
 }
 
 //Heuristic if object1 should be onTopOf(inside) object2
-function heuristicOnTopOf(state: WorldState, object1: string, object2: string){
-    //TODO: Check if in the same stack, should calculate something
-    let totalCost = 0;
-    //Distance between the objects
-    let horizontal = distanceBetweenObjects(state, object1, object2);
-    //object1 and object2 is in the same stack
-    if(horizontal === 0){
-        return 0;
+function heuristicOnTopOf(state: WorldState, literals: Interpreter.Literal[]){
+    if (literals.length == 1) {
+        var firstObject = literals[0].args[0];
+        var secondObject = literals[0].args[1];
+        let totalCost = 0;
+        //Distance between the objects
+        let horizontal = distanceBetweenObjects(state, firstObject, secondObject);
+        //object1 and object2 is in the same stack, TODO: Make more realistic
+        if(horizontal === 0){
+            return 0;
+        }
+        //Add the distance plus the movement of any possible objects already on top of 2
+        totalCost = horizontal + amountOntop(state, secondObject);
+        //Arm is already holding object, i.e only need to drop
+        if(state.holding === firstObject){
+            return totalCost + 1;
+        }
+        //Add cost to pick up object1
+        totalCost += amountOntop(state, firstObject);
+        //Add +2 for take and drop
+        return totalCost + 2;
     }
-    //Add the distance plus the movement of any possible objects already on top of 2
-    totalCost = horizontal + amountOntop(state, object2);
-    //Arm is already holding object, i.e only need to drop
-    if(state.holding === object1){
-        return totalCost + 1;
+
+    // en grej per stack!
+
+    // If we get here we have a conjunction, and a conjunction with
+    // onTop will only be physically possible with floor
+    var stacksAlreadyManipulated = [];
+    var result = 0;
+    for (let i = 0; i < literals.length; i++) {
+        var firstObject = literals[i].args[0];
+        for (let j = 0; j < state.stacks.length; j++) {
+            for (let k = 0; k < state.stacks[j].length; k++) {
+                if (state.stacks[j][k] == firstObject) {
+                    if (k != 0 && stacksAlreadyManipulated.indexOf(j) < 0) {
+                        stacksAlreadyManipulated.push(j);
+
+                        result = result + amountOntop(state, firstObject);
+
+                        // Add two because we need to move and drop it
+                        result = result + 2;
+                        // ADD THE SHIT
+                    }
+                }
+            }
+        }
     }
-    //Add cost to pick up object1
-    totalCost += amountOntop(state, object1);
-    //Add +2 for take and drop
-    return totalCost + 2;
+    return result;
 }
+
 //Heuristic if object1 should be above object2
 function heuristicAbove(state: WorldState, object1: string, object2: string){
     //TODO: Can be optimized, u know
