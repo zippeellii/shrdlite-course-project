@@ -102,55 +102,75 @@ function heuristicUnder(state: WorldState, object1: string, object2: string){
     return horizontal + amountOntop(state, object2) + 2;
 }
 //Heuristic if object1 should be to the left of object2
-function heuristicLeftOf(state: WorldState, object1: string, object2: string){
-    var result = 0;
-    var firstIndex = -1;
-    var holdingFirst = false;
-    var secondIndex = -1;
-    var holdingSecond = false;
+function heuristicLeftOf(state: WorldState, literals: Interpreter.Literal[]){
+    var shortestOfConjunction = Number.MAX_VALUE;
 
-    // Finds index of object1 regardless of if it is held
-    if (state.holding === object1) {
-        firstIndex = state.arm;
-        holdingFirst = true;
-    } else {
-        for (let i = 0; i < state.stacks.length; i++) {
-            if (state.stacks[i].indexOf(object1) > -1) {
-                firstIndex = i;
-                break;
+    for (let i = 0; i < literals.length; i++) {
+        var result = 0;
+        var firstIndex = -1;
+        var holdingFirst = false;
+        var secondIndex = -1;
+        var holdingSecond = false;
+        var firstObject = literals[i].args[0];
+        var secondObject = literals[i].args[1];
+
+        // Finds index of object1 regardless of if it is held
+        if (state.holding === firstObject) {
+            firstIndex = state.arm;
+            holdingFirst = true;
+        } else {
+            for (let i = 0; i < state.stacks.length; i++) {
+                if (state.stacks[i].indexOf(firstObject) > -1) {
+                    firstIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Finds index of object2 regardless of if it is held
+        if (state.holding === secondObject) {
+            secondIndex = state.arm;
+            holdingSecond = true;
+        } else {
+            for (let i = 0; i < state.stacks.length; i++) {
+                if (state.stacks[i].indexOf(firstObject) > -1) {
+                    secondIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (firstIndex < secondIndex) {
+            if (holdingFirst || holdingSecond) {
+                // Add one for dropping
+                result = 1;
+                if (result < shortestOfConjunction) {
+                    shortestOfConjunction = result;
+                    continue;
+                }
+            }
+            shortestOfConjunction = 0;
+            continue;
+        } else {
+            // Distance from first to exactly one step right of second
+            result = firstIndex - (secondIndex - 1);
+            if (holdingFirst || holdingSecond) {
+                // Add one for dropping
+                result = result + 1;
+                if (result < shortestOfConjunction) {
+                    shortestOfConjunction = result;
+                    continue;
+                }
+            }
+            // Add two for pick up and drop
+            result = result + 2;
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
             }
         }
     }
-
-    // Finds index of object2 regardless of if it is held
-    if (state.holding === object2) {
-        secondIndex = state.arm;
-        holdingSecond = true;
-    } else {
-        for (let i = 0; i < state.stacks.length; i++) {
-            if (state.stacks[i].indexOf(object1) > -1) {
-                secondIndex = i;
-                break;
-            }
-        }
-    }
-
-    if (firstIndex < secondIndex) {
-        if (holdingFirst || holdingSecond) {
-            // Add one for dropping
-            return 1;
-        }
-        return 0;
-    } else {
-        // Distance from first to exactly one step right of second
-        result = firstIndex - (secondIndex - 1);
-        if (holdingFirst || holdingSecond) {
-            // Add one for dropping
-            return result + 1;
-        }
-        // Add two for pick up and drop
-        return result + 2;
-    }
+    return shortestOfConjunction;
 }
 
 //Heuristic if object1 should be to the right of object2

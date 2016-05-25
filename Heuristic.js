@@ -61,51 +61,7 @@ function heuristicUnder(state, object1, object2) {
     }
     return horizontal + amountOntop(state, object2) + 2;
 }
-function heuristicLeftOf(state, object1, object2) {
-    var result = 0;
-    var firstIndex = -1;
-    var holdingFirst = false;
-    var secondIndex = -1;
-    var holdingSecond = false;
-    if (state.holding === object1) {
-        firstIndex = state.arm;
-        holdingFirst = true;
-    }
-    else {
-        for (var i = 0; i < state.stacks.length; i++) {
-            if (state.stacks[i].indexOf(object1) > -1) {
-                firstIndex = i;
-                break;
-            }
-        }
-    }
-    if (state.holding === object2) {
-        secondIndex = state.arm;
-        holdingSecond = true;
-    }
-    else {
-        for (var i = 0; i < state.stacks.length; i++) {
-            if (state.stacks[i].indexOf(object1) > -1) {
-                secondIndex = i;
-                break;
-            }
-        }
-    }
-    if (firstIndex < secondIndex) {
-        if (holdingFirst || holdingSecond) {
-            return 1;
-        }
-        return 0;
-    }
-    else {
-        result = firstIndex - (secondIndex - 1);
-        if (holdingFirst || holdingSecond) {
-            return result + 1;
-        }
-        return result + 2;
-    }
-}
-function heuristicRightOf(state, literals) {
+function heuristicLeftOf(state, literals) {
     var shortestOfConjunction = Number.MAX_VALUE;
     for (var i = 0; i < literals.length; i++) {
         var result = 0;
@@ -135,6 +91,69 @@ function heuristicRightOf(state, literals) {
             for (var i_2 = 0; i_2 < state.stacks.length; i_2++) {
                 if (state.stacks[i_2].indexOf(firstObject) > -1) {
                     secondIndex = i_2;
+                    break;
+                }
+            }
+        }
+        if (firstIndex < secondIndex) {
+            if (holdingFirst || holdingSecond) {
+                result = 1;
+                if (result < shortestOfConjunction) {
+                    shortestOfConjunction = result;
+                    continue;
+                }
+            }
+            shortestOfConjunction = 0;
+            continue;
+        }
+        else {
+            result = firstIndex - (secondIndex - 1);
+            if (holdingFirst || holdingSecond) {
+                result = result + 1;
+                if (result < shortestOfConjunction) {
+                    shortestOfConjunction = result;
+                    continue;
+                }
+            }
+            result = result + 2;
+            if (result < shortestOfConjunction) {
+                shortestOfConjunction = result;
+                continue;
+            }
+        }
+    }
+    return shortestOfConjunction;
+}
+function heuristicRightOf(state, literals) {
+    var shortestOfConjunction = Number.MAX_VALUE;
+    for (var i = 0; i < literals.length; i++) {
+        var result = 0;
+        var firstIndex = -1;
+        var holdingFirst = false;
+        var secondIndex = -1;
+        var holdingSecond = false;
+        var firstObject = literals[i].args[0];
+        var secondObject = literals[i].args[1];
+        if (state.holding === firstObject) {
+            firstIndex = state.arm;
+            holdingFirst = true;
+        }
+        else {
+            for (var i_3 = 0; i_3 < state.stacks.length; i_3++) {
+                if (state.stacks[i_3].indexOf(firstObject) > -1) {
+                    firstIndex = i_3;
+                    break;
+                }
+            }
+        }
+        if (state.holding === secondObject) {
+            secondIndex = state.arm;
+            holdingSecond = true;
+        }
+        else {
+            for (var i_4 = 0; i_4 < state.stacks.length; i_4++) {
+                if (state.stacks[i_4].indexOf(firstObject) > -1) {
+                    secondIndex = i_4;
                     break;
                 }
             }
