@@ -79,18 +79,63 @@ function heuristicLeftOf(state: WorldState, object1: string, object2: string){
 function heuristicRightOf(state: WorldState, object1: string, object2: string){
     // distance between rightof and object1
 }
+
 //Heuristic if object1 should be beside object2
 function heuristicBeside(state: WorldState, object1: string, object2: string){
-    // Smallest distance of (object1, leftof) and (object1, rightof)
+    var result = 0;
+
+    if (state.holding === object1) {
+        // Smallest distance of directly left of or directly right of
+        result = distanceFromArm(state, object2) - 1;
+
+        // Add one for dropping
+        return result + 1;
+    }
+
+    if (state.holding === object2) {
+        // Smallest distance of directly left of or directly right of
+        result = distanceFromArm(state, object1) - 1;
+
+        // Add one for dropping
+        return result + 1;
+    }
+
+    // Smallest distance of directly left of or directly right of
+    result = result + distanceBetweenObjects(state, object1, object2) - 1;
+    if (result === -1) {
+        // In same stack, add two for pickup and drop
+        return 2;
+    } else if (result === 0) {
+        // Directly next to each other
+        return result;
+    }
+
+    // Add two for picking up and dropping
+    return result + 2;
 }
 
 //Heuristic if the arm should hold object1
 function heuristicHolding(state: WorldState, object1: string){
-    // Remove all objects on top object1, then adds one
+    var result = 0;
+    if (state.holding === object1) {
+        return result;
+    }
+    if (state.holding != null && state.holding != undefined) {
+        // If we hold something else, we need to drop it first
+        result = result + 1;
+    }
+
+    // Move arm into position and remove objects on top
+    var armResult = distanceFromArm(state, object1);
+    var ontopResult = amountOntop(state, object1);
+    if (armResult > -1 && ontopResult > -1) {
+        // Add one on the end for picking up
+        return result + armResult + ontopResult + 1;
+    }
 }
 
 //Horizontal distance from object1 to object2
-function distance(state: WorldState, object1: string, object2: string) : number {
+function distanceBetweenObjects(state: WorldState, object1: string, object2: string) : number {
     var indexFrom = -1;
     var indexTo = -1;
     for (let i = 0; i < state.stacks.length; i++) {
@@ -103,7 +148,7 @@ function distance(state: WorldState, object1: string, object2: string) : number 
     }
     if (indexFrom > -1 && indexTo > -1) {
         var result = indexTo - indexFrom;
-         if (result > 0) {
+         if (result < 0) {
              return result * -1;
          }
          return result;
@@ -111,7 +156,23 @@ function distance(state: WorldState, object1: string, object2: string) : number 
     return -1;
 }
 
-// Moves needed to remove everything ontop of an object
+//Horizontal distance from the arm to object1
+function distanceFromArm(state: WorldState, object1: string) : number {
+    var armIndex = state.arm;
+    var objectIndex = -1;
+    for (let i = 0; i < state.stacks.length; i++) {
+        if (state.stacks[i].indexOf(object1) > -1) {
+            var result = armIndex - i;
+            if (result < 0) {
+                return result * -1;
+            }
+            return result;
+        }
+    }
+    return -1;
+}
+
+// Moves needed to remove everything ontop of an object and return to original state
 function amountOntop(state: WorldState, object1: string) : number {
     var objectsOnTop = 0;
     for (let i = 0; i < state.stacks.length; i++) {
@@ -126,9 +187,9 @@ function amountOntop(state: WorldState, object1: string) : number {
                 }
             }
             // Multiply by 4 because it is the lowest amount of moves ever
-            // possible for moving something from a stack and
-            // returning the claw to its original position
-            return objectsOnTop * 4;
+            // possible for moving something from a stack and dropping it somewhere else
+            return objectsOnTop * 3;
         }
     }
+    return -1;
 }
