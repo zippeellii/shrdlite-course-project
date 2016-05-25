@@ -6,10 +6,6 @@
     // Plussa på minsta distansen som inte är noll
         // Plussa på 3 för varje som inte ligger där de ska
 
-// If beside, ta minsta distansen som inte är noll
-
-// If left-/right-of,
-
 // If under,
 
 var heuristicFunctions = new collections.Dictionary<string, Function>();
@@ -24,7 +20,7 @@ heuristicFunctions.setValue('ontop', heuristicOnTopOf);
 /*Wrapper function for handling heuristic calculation, responsible for
 sending the evaluation to the correct heuristic*/
 function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldState) : number {
-    var totLength = Number.MAX_VALUE;
+    var minLength = Number.MAX_VALUE;
     for (let i = 0; i < interpretation.length; i++) {
         var length = 0;
         var relation = interpretation[i][0].relation;
@@ -36,10 +32,10 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
         }
 
         //Overwrite if the new length is shorter
-        totLength = length < totLength ? length : totLength;
+        minLength = length < minLength ? length : minLength;
     }
     //Handle the calling here
-    return totLength;
+    return minLength;
 }
 
 //Heuristic if object1 should be onTopOf(inside) object2

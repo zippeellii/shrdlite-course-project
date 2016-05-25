@@ -7,7 +7,7 @@ heuristicFunctions.setValue('rightof', heuristicRightOf);
 heuristicFunctions.setValue('beside', heuristicBeside);
 heuristicFunctions.setValue('ontop', heuristicOnTopOf);
 function evalHeuristic(interpretation, state) {
-    var totLength = Number.MAX_VALUE;
+    var minLength = Number.MAX_VALUE;
     for (var i = 0; i < interpretation.length; i++) {
         var length = 0;
         var relation = interpretation[i][0].relation;
@@ -18,9 +18,9 @@ function evalHeuristic(interpretation, state) {
         else {
             length = heuristicFunctions.getValue(relation)(state, literals);
         }
-        totLength = length < totLength ? length : totLength;
+        minLength = length < minLength ? length : minLength;
     }
-    return totLength;
+    return minLength;
 }
 function heuristicOnTopOf(state, object1, object2) {
     var totalCost = 0;
