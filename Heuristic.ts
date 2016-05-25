@@ -17,7 +17,12 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
             let object1 = interpretation[i][j].args[0];
             let object2 = interpretation[i][j].args[1];
             let relation = interpretation[i][j].relation;
-            length += heuristicFunctions.getValue(relation)(state, object1, object2);
+            if(relation === 'holding'){
+                length += heuristicHolding(state, object1);
+            }
+            else{
+                length += heuristicFunctions.getValue(relation)(state, object1, object2);
+            }
         }
         //Overwrite if the new length is shorter
         totLength = length < totLength ? length : totLength;
@@ -38,6 +43,8 @@ function heuristicOnTopOf(state: WorldState, object1: string, object2: string){
     }
     //Add the distance plus the movement of any possible objects already on top of 2
     totalCost = horizontal + amountOntop(state, object2);
+    console.log("HORIZONTAL: ", horizontal);
+    console.log("AMOUNT ON TOP: ", totalCost - horizontal);
     //Arm is already holding object, i.e only need to drop
     if(state.holding === object1){
         return totalCost + 1;
@@ -264,7 +271,11 @@ function distanceBetweenObjects(state: WorldState, object1: string, object2: str
         }
         return result;
     }
-    return 0;
+    var result = indexTo - indexFrom;
+    if (result < 0) {
+        return result * -1;
+    }
+    return result;
 }
 
 //Horizontal distance from the arm to object1
