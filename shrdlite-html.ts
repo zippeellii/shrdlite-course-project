@@ -37,7 +37,6 @@ $(function(){
         console.log(chosenAlgorithm);
     });
 
-
     var world : World = new SVGWorld(ExampleWorlds[current], useSpeech);
     Shrdlite.interactive(world);
 });

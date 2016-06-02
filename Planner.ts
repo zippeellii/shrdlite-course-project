@@ -123,6 +123,7 @@ module Planner {
 
     function generatePlanFromResult (startNode : StateNode, result : SearchResult<StateNode>, graph : StateGraph) : string[] {
         var plan : string[] = [];
+        plan.push("The search algorithm processed " + result.steps + " states, and the resulting path is " + result.cost + " steps long.");
         result.path.unshift(startNode);
         for (let i = 0; i < result.path.length; i++) {
             var edges = graph.outgoingEdges(result.path[i]);
