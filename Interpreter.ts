@@ -31,12 +31,13 @@ module Interpreter {
     //////////////////////////////////////////////////////////////////////
     // exported functions, classes and interfaces/types
 
-/**
-Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
-* @param parses List of parses produced by the Parser.
-* @param currentState The current state of the world.
-* @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
-*/
+    /**
+    * Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
+    *
+    * @param parses List of parses produced by the Parser.
+    * @param currentState The current state of the world.
+    * @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
+    */
     export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
         var errors : Error[] = [];
         var interpretations : InterpretationResult[] = [];
@@ -69,24 +70,23 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     * hold among some objects.
     */
     export interface Literal {
-	/** Whether this literal asserts the relation should hold
-	 * (true polarity) or not (false polarity). For example, we
-	 * can specify that "a" should *not* be on top of "b" by the
-	 * literal {polarity: false, relation: "ontop", args:
-	 * ["a","b"]}.
-	 */
+    	/** Whether this literal asserts the relation should hold
+    	 * (true polarity) or not (false polarity). For example, we
+    	 * can specify that "a" should *not* be on top of "b" by the
+    	 * literal {polarity: false, relation: "ontop", args:
+    	 * ["a","b"]}.
+    	 */
         polarity : boolean;
-	/** The name of the relation in question. */
+    	/** The name of the relation in question. */
         relation : string;
-	/** The arguments to the relation. Usually these will be either objects
-     * or special strings such as "floor" or "floor-N" (where N is a column) */
+       /** The arguments to the relation. Usually these will be either objects
+       * or special strings such as "floor" or "floor-N" (where N is a column) */
         args : string[];
     }
 
     export function stringify(result : InterpretationResult) : string {
         return result.interpretation.map((literals) => {
             return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
-            // return literals.map(stringifyLiteral).join(" & ");
         }).join(" | ");
     }
 
@@ -108,7 +108,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-        //Maps a relation to a the phsyics function correlating
+        //Maps a relation to a the correlating phsyics function
         var physicFunctionsMap = new collections.Dictionary<string, Function>();
         physicFunctionsMap.setValue('inside', checkOnTopOf);
         physicFunctionsMap.setValue('above', checkAbove);
@@ -131,6 +131,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         //If there exists a location of where to put the object(s)
         if (cmd.location) {
           var locationObjects = getNodeObjects(cmd.location.entity, state);
+          // Loops over all combinations of the locationObjects and entityObjects
+          // If all interpretations in a conjunction are physically possible, we add
+          // that conjunction to the interpretation variable
           for(var i = 0; i < locationObjects.length; i++){
               for(var j = 0; j < entityObjects.length; j++){
                   var conjCommands : Literal[] = [];
@@ -151,8 +154,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
               }
           }
         }
+        //No location, must be the "holding" relation
         else{
-          //No location, must be "holding" relation
           for(var i = 0; i < entityObjects.length; i++) {
             if (entityObjects[i].length === 1) {
               for(var j = 0; j < entityObjects[i].length; j++) {
@@ -167,14 +170,20 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return interpretation;
     }
 
+    /**
+     * Helper function to convert an object to the string representation used in the WorldState
+     * return.
+     * @param object The object representation of something in the world
+     * @param state The current state of the world.
+     * @returns A list of strings corresponding to the things in the WorldState that match the description given by the object
+     */
     function findObject(object : Parser.Object, state : WorldState) : string[] {
-      //No more recursive objects
       var tmp : string[] = [];
       if(object.form == 'floor'){
         tmp.push('floor');
       }
       if(object.object == undefined){
-        //For all objects, find one matching
+        // For all objects, the matching
         for(var obj in state.objects){
           var other = state.objects[obj];
           if(validForm(object, other.form) && validSize(object, other.size) && validColor(object, other.color)){
@@ -185,6 +194,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
       return tmp;
     }
 
+    // Checks if the form of the string representation worldObject corresponds to the object given
     function validForm(object : Parser.Object, worldObject : string ) : boolean {
       if(object.form == undefined || object.form == null || object.form == "anyform"){
         return true;
@@ -192,6 +202,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
       return object.form == worldObject;
     }
 
+    // Checks if the size of the string representation worldObject corresponds to the object given
     function validSize(object : Parser.Object, worldObject : string) : boolean {
       if(object.size == undefined || object.size == null){
         return true;
@@ -199,6 +210,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
       return object.size == worldObject;
     }
 
+    // Checks if the color of the string representation worldObject corresponds to the object given
     function validColor(object : Parser.Object, worldObject : string) : boolean {
       if(object.color == null || object.color == undefined){
         return true;
@@ -208,27 +220,29 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
     // Will return an array of strings that recursively corresponds to the objects of the node
     function getNodeObjects(node : any, state : WorldState) : string[][] {
-        // Is location
+        // If the node is a location node
         if (node.entity && node.relation) {
             return getLocationObjects(node, state);
         }
 
-        // Is entity
+        // Is the node is an entity node
         if (node.quantifier && node.object) {
             return getEntityObjects(node, state);
         }
 
-        // Is complex object
+        // If the node is a complex object node
         if (node.location && node.object) {
             return getComplexObject(node, state);
         }
 
-        // Is simple object
+        // If the node is a simple object node
         var tmp : string[][] = [];
         tmp.push(findObject(node, state));
+
         return tmp;
     }
 
+    // Checks which relation is in the node and calls the appropriate function
     function getLocationObjects(node : any, state : WorldState) : string[][] {
         var entity = getNodeObjects(node.entity, state);
 
@@ -250,10 +264,15 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return [];
     }
 
+    // Checks which quantifier is in the entity node, and calls the appropriate function
     function getEntityObjects(node : any, state : WorldState) : string[][] {
         var entity = getNodeObjects(node.object, state);
+
         if (node.quantifier == "the") {
-          if(entity.length > 1){
+          // If we have more than one conjunction we need to check that they are
+          // all the same, and that they all are length one.
+          // Otherwise there is no definite "THE" object
+          if(entity.length > 1) {
             var tmpValue = entity[0][0];
             for(let i = 1; i < entity.length; i++){
               if(entity[i].length > 1 || entity[i][0] != tmpValue){
@@ -274,7 +293,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             var tmp : string[][] = [];
 
             for (let i = 0; i < entity.length; i++) {
-                // For each outer list, split it up in ORs
+                // For each conjunciton, split it up in disjunctions
                 for (let j = 0; j < entity[i].length; j++) {
                     var innerTmp : string[] = [];
                     innerTmp.push(entity[i][j]);
@@ -289,6 +308,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return [];
     }
 
+    // Recursive function for getting a disjunction of conjunctions of objects
     function getComplexObject(node : any, state : WorldState) : string[][] {
         var objects = getNodeObjects(node.object, state);
         var concatObjects : string[] = Array.prototype.concat.apply([], objects);
@@ -310,8 +330,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         return intersectionObjects;
     }
 
+    // This removes all the objects in the state which is not in the stacks in
+    // the given world, this needs to be done once in order for all other functions to work
     function removeObjectsNotInStacks(state : WorldState) {
-        // This removes all the objects in the state which is not in the stacks
         var objectExists : boolean = false;
         for(var obj in state.objects){
           objectExists = false;
