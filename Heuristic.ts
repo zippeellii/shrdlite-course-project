@@ -45,7 +45,7 @@ function heuristicOnTopOf(state: WorldState, literals: Interpreter.Literal[]){
         let totalCost = 0;
         //Distance between the objects
         let horizontal = distanceBetweenObjects(state, firstObject, secondObject);
-        //object1 and object2 is in the same stack, TODO: Make more realistic
+        //object1 and object2 is in the same stack
         if(horizontal === 0){
             return 0;
         }
@@ -122,7 +122,6 @@ function heuristicAbove(state: WorldState, literals: Interpreter.Literal[]){
 
 //Heuristic for the under relation
 function heuristicUnder(state: WorldState, literals: Interpreter.Literal[]){
-    //TODO: Can be optimized, u know
     var freeCost = 0;
     var shortestDistance = Number.MAX_VALUE;
     var leastMoveCounter = 0;
