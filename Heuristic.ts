@@ -124,22 +124,55 @@ function heuristicAbove(state: WorldState, literals: Interpreter.Literal[]){
     return freeCost + shortestDistance + leastMoveCounter;
 }
 //Heuristic if object1 should be under object2
-function heuristicUnder(state: WorldState, object1: string, object2: string){
-    let horizontal = distanceBetweenObjects(state, object1, object2);
-    if(horizontal === 0){
-        return 0;
+function heuristicUnder(state: WorldState, literals: Interpreter.Literal[]){
+    //TODO: Can be optimized, u know
+    var freeCost = 0;
+    var shortestDistance = Number.MAX_VALUE;
+    var leastMoveCounter = 0;
+    for (let k = 0; k < literals.length; k++) {
+        for (let i = 0; i < state.stacks.length; i++) {
+            if(state.stacks[i].indexOf(literals[k].args[0]) > -1){
+                continue;
+            }
+            for (let j = state.stacks[i].length-1; j >=0; j--) {
+                //Found the object in the stack
+                if(state.stacks[i][j] === literals[k].args[1]){
+                    //Is the distance shorter?
+                    let newDist = distanceBetweenObjects(state,literals[k].args[1], literals[k].args[0]);
+                    if(state.holding === literals[k].args[0]){
+                        newDist = distanceFromArm(state, literals[k].args[1]);
+                    }
+                    shortestDistance = shortestDistance > newDist ? newDist : shortestDistance;
+                    freeCost += amountOntop(state, state.stacks[i][j]);
+                    //Object that is not already above must be lifted, moved and dropped
+                    leastMoveCounter += 3;
+                    break;
+                }
+            }
+        }
     }
-    if(state.holding === object1){
-        //Add three for dropping object1 and picking up object2 and drop object 2
-        return distanceFromArm(state, object2) + amountOntop(state, object2) + 3;
+    //Found no shortest distance (probably holding object2)
+    if(shortestDistance === Number.MAX_VALUE) {
+        shortestDistance = 1;
     }
-    if(state.holding === object2){
-        //Add one for dropping object2
-        return distanceFromArm(state, object1) + 1;
-    }
-    //Add two for picking up and dropping object2
-    return horizontal + amountOntop(state, object2) + 2;
+    return freeCost + shortestDistance + leastMoveCounter;
+
+    // let horizontal = distanceBetweenObjects(state, object1, object2);
+    // if(horizontal === 0){
+    //     return 0;
+    // }
+    // if(state.holding === object1){
+    //     //Add three for dropping object1 and picking up object2 and drop object 2
+    //     return distanceFromArm(state, object2) + amountOntop(state, object2) + 3;
+    // }
+    // if(state.holding === object2){
+    //     //Add one for dropping object2
+    //     return distanceFromArm(state, object1) + 1;
+    // }
+    // //Add two for picking up and dropping object2
+    // return horizontal + amountOntop(state, object2) + 2;
 }
+
 //Heuristic if object1 should be to the left of object2
 function heuristicLeftOf(state: WorldState, literals: Interpreter.Literal[]){
     var shortestOfConjunction = Number.MAX_VALUE;
