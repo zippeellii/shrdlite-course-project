@@ -48,7 +48,7 @@ class SearchResult<Node> {
 * @param goal A function that returns true when given a goal node. Used to determine if the algorithm has reached the goal.
 * @param heuristics The heuristic function. Used to estimate the cost of reaching the goal from a given Node.
 * @param timeout Maximum time (in seconds) to spend performing A\* search.
-* @returns A search result, which contains the path from `start` to a node satisfying `goal` and the cost of this path.
+* @returns A search result, which contains the path from `start` to a node satisfying `goal`, the number of node processed(steps) and the cost of this path.
 */
 function aStarSearch<Node> (
     graph : Graph<Node>,
@@ -57,9 +57,9 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+    //Step variable to count number of processed nodes
     var steps = 0;
     var time = new Date().getTime();
-    //Initial setup
     var processed = new collections.Set<Node>();
     //Store the path, i.e what parent that has the shortest path for me
     var bestParent = new collections.Dictionary<Node, Node>();
@@ -86,7 +86,8 @@ function aStarSearch<Node> (
 
     //Whenever there is a new node to visit, do it
     while (!nextToVisit.isEmpty()){
-        if(new Date().getTime() - time > timeout){
+        //Timeout if too long time has passed
+        if(new Date().getTime() - time > timeout*1000){
             throw ('Timeout');
         }
       var currentNode = nextToVisit.dequeue();
@@ -125,15 +126,24 @@ function aStarSearch<Node> (
         }
       }
     }
+    //No path found
     return undefined;
 }
-
+/**
+Breadth-first-search algorithm.
+* @param graph The graph on which to perform BFS search.
+* @param start The initial node.
+* @param goal A function that returns true when given a goal node. Used to determine if the algorithm has reached the goal.
+* @param timeout Maximum time (in seconds) to spend performing BFS search.
+* @returns A search result, which contains the path from `start` to a node satisfying `goal`, the number of nodes processed(steps) and the cost of this path.
+*/
 function BFS<Node> (
     graph : Graph<Node>,
     start : Node,
     goal : (n:Node) => boolean,
     timeout : number
 ) : SearchResult<Node> {
+    //Step variable to count number of processed nodes
     var steps = 0;
     var time = new Date().getTime();
     //Queue to handle exploring order of nodes
@@ -144,13 +154,12 @@ function BFS<Node> (
     queue.add(start);
     //If more nodes are exploreable, explore
     while(!queue.isEmpty()){
-        steps++;
         //Timeout if too long time has passed
-        if(new Date().getTime() - time > timeout){
+        if(new Date().getTime() - time > timeout*1000){
             throw ('Timeout');
         }
+        steps++;
         var current : Node = queue.dequeue();
-        console.log(parent);
         if(goal(current)){
             var pathNode = current;
             var path = new Array();
@@ -165,21 +174,28 @@ function BFS<Node> (
                 cost: path.length,
                 steps: steps
             };
-            console.log(result);
             return result;
         }
         var edges = graph.outgoingEdges(current);
         for(var edge of edges){
+            //Consider all nodes that has not yet been discovered
             if(!parent.containsKey(edge.to)){
                 parent.setValue(edge.to, current);
                 queue.add(edge.to);
             }
         }
     }
-
+    //No path found
     return undefined;
 }
-
+/**
+Depth-first-search algorithm.
+* @param graph The graph on which to perform DFS search.
+* @param start The initial node.
+* @param goal A function that returns true when given a goal node. Used to determine if the algorithm has reached the goal.
+* @param timeout Maximum time (in seconds) to spend performing DFS search.
+* @returns A search result, which contains the path from `start` to a node satisfying `goal`, the number of nodes processed(steps) and the cost of this path.
+*/
 function DFS<Node> (
     graph : Graph<Node>,
     start : Node,
@@ -188,12 +204,17 @@ function DFS<Node> (
 ) : SearchResult<Node> {
     var steps = 0;
     var time = new Date().getTime();
+    //Stack to handle ordering of next to process
     var stack = new collections.Stack<Node>();
     var parent = new collections.Dictionary<Node, Node>();
     parent.setValue(start, null);
     stack.add(start);
 
     while(!stack.isEmpty()){
+        //Timeout if too long time has passed
+        if(new Date().getTime() - time > timeout*1000){
+            throw ('Timeout');
+        }
         steps++;
         var current : Node = stack.pop();
         if(goal(current)){
@@ -214,6 +235,7 @@ function DFS<Node> (
         }
         var edges = graph.outgoingEdges(current);
         for(var edge of edges){
+            //Consider all nodes that has not yet been discovered
             if(!parent.containsKey(edge.to)){
                 parent.setValue(edge.to, current);
                 stack.push(edge.to);
@@ -221,6 +243,6 @@ function DFS<Node> (
 
         }
     }
-
+    //No path found
     return undefined;
 }

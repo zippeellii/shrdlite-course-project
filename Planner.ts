@@ -106,13 +106,13 @@ module Planner {
           // chosenAlgorithm corresponds to the value chosen by the user
           switch(+chosenAlgorithm) {
               case 0:
-                result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10000);
+                result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10);
                 break;
               case 1:
-                result = DFS<StateNode>(graph, startNode, isGoal, 10000);
+                result = DFS<StateNode>(graph, startNode, isGoal, 10);
                 break;
               case 2:
-                result = BFS<StateNode>(graph, startNode, isGoal, 10000);
+                result = BFS<StateNode>(graph, startNode, isGoal, 10);
                 break;
           }
         return generatePlanFromResult(startNode, result, graph);
