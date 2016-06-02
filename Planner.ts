@@ -6,6 +6,7 @@
 ///<reference path="lib/collections.ts"/>
 ///<reference path="lib/node.d.ts"/>
 ///<reference path="Heuristic.ts"/>
+///<reference path="./shrdlite-html.ts"/>
 
 /**
 * Planner module
@@ -103,9 +104,20 @@ module Planner {
           var heuristic = function (node : StateNode) : number { // Heuristics function
               return evalHeuristic(interpretation, node.state);
           };
-        //var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10000);
-        //var result = BFS<StateNode>(graph, startNode, isGoal, 10000);
-        var result = DFS<StateNode>(graph, startNode, isGoal, 10000);
+          var result:SearchResult<StateNode> = undefined;
+          switch(+chosenAlgorithm){
+              case 0:
+                result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10000);
+                break;
+              case 1:
+                result = DFS<StateNode>(graph, startNode, isGoal, 10000);
+                break;
+              case 2:
+                result = BFS<StateNode>(graph, startNode, isGoal, 10000);
+                break;
+
+          }
+         //result = DFS<StateNode>(graph, startNode, isGoal, 10000);
         return generatePlanFromResult(startNode, result, graph);
     }
 

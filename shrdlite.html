@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html> 
+<html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Shrdlite</title>
@@ -16,7 +16,12 @@
     <th><strong>Current world:</strong>
       <em><span id="currentworld"></span></em> (<span id="resetworld"></span>)<br>
       <strong>Speech synthesis:</strong> <span id="togglespeech"></span><br>
-      <strong>Other worlds:</strong> <span id="otherworlds"></span>
+      <strong>Other worlds:</strong> <span id="otherworlds"></span><br>
+      <form id="algorithm-picker">
+          <input type="radio" value="0" name="search" checked>A*
+          <input type="radio" value="1" name="search">DFS
+          <input type="radio" value="2" name='search'>BFS
+      </form>
   </tr><tr>
     <td id="theworld"></td>
     <td>
@@ -37,9 +42,9 @@
     <strong>shrdlite.html</strong> <br>
     Copyright &copy; 2013-15, Peter Ljungl&ouml;f. <br>
     This program comes with <em>absolutely no warranty</em>. <br>
-    This is free software, and you are welcome to redistribute it under certain conditions; 
+    This is free software, and you are welcome to redistribute it under certain conditions;
     read <a href="http://www.gnu.org/licenses/gpl.html" target="__blank"><em>the license</em></a> for details.
   </div>
 </div>
-</body> 
+</body>
 </html>
