@@ -20,7 +20,6 @@ var Planner;
             return plans;
         }
         else {
-            console.log('Throwing error');
             throw errors[0];
         }
     }
@@ -32,7 +31,6 @@ var Planner;
     function planInterpretation(interpretation, state) {
         var graph = new StateGraph();
         var startNode = new StateNode(state);
-        console.log('Start state: ' + startNode);
         var isGoal = function (node) {
             for (var i = 0; i < interpretation.length; i++) {
                 var fulfillsAll = true;
@@ -66,7 +64,9 @@ var Planner;
     }
     function generatePlanFromResult(startNode, result, graph) {
         var plan = [];
-        plan.push("The search algorithm processed " + result.steps + " states, and the resulting path is " + result.cost + " steps long.");
+        plan.push("The search algorithm processed " + result.steps +
+            " states, and the resulting path is " + result.cost +
+            " steps long.");
         result.path.unshift(startNode);
         for (var i = 0; i < result.path.length; i++) {
             var edges = graph.outgoingEdges(result.path[i]);

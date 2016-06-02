@@ -41,10 +41,6 @@ $(function(){
     Shrdlite.interactive(world);
 });
 
-function getSearchStrategy(){
-    return chosenAlgorithm;
-}
-
 // Adapted from: http://www.openjs.com/scripts/events/exit_confirmation.php
 function goodbye(e : any) {
     // Note: the type of 'e' is really 'Event', but its interface says that

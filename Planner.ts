@@ -47,7 +47,6 @@ module Planner {
         if (plans.length) {
             return plans;
         } else {
-          console.log('Throwing error');
             // only throw the first error found
             throw errors[0];
         }
@@ -83,10 +82,8 @@ module Planner {
      * be added using the `push` method.
      */
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
-
         var graph = new StateGraph();
         var startNode = new StateNode(state);
-        console.log('Start state: ' + startNode);
         var isGoal = function (node : StateNode) : boolean { // Goal-checking function
             for (let i = 0; i < interpretation.length; i++) {
                 var fulfillsAll = true;
@@ -105,7 +102,9 @@ module Planner {
               return evalHeuristic(interpretation, node.state);
           };
           var result:SearchResult<StateNode> = undefined;
-          switch(+chosenAlgorithm){
+
+          // chosenAlgorithm corresponds to the value chosen by the user
+          switch(+chosenAlgorithm) {
               case 0:
                 result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10000);
                 break;
@@ -115,15 +114,26 @@ module Planner {
               case 2:
                 result = BFS<StateNode>(graph, startNode, isGoal, 10000);
                 break;
-
           }
-          console.log('Steps: ', result.steps);
         return generatePlanFromResult(startNode, result, graph);
     }
 
+
+    /**
+    * Converts a result to a plan, which is a list of strings
+    *
+    * @param interpretation The logical interpretation of the user's desired goal.
+    * @param startNode The starting node
+    * @returns a plan, (list of actions to be performed) that can be used to go from the starting state to a goal state
+    */
     function generatePlanFromResult (startNode : StateNode, result : SearchResult<StateNode>, graph : StateGraph) : string[] {
         var plan : string[] = [];
-        plan.push("The search algorithm processed " + result.steps + " states, and the resulting path is " + result.cost + " steps long.");
+
+        // Will be printed in the interface
+        plan.push("The search algorithm processed " + result.steps +
+                    " states, and the resulting path is " + result.cost +
+                    " steps long.");
+
         result.path.unshift(startNode);
         for (let i = 0; i < result.path.length; i++) {
             var edges = graph.outgoingEdges(result.path[i]);
@@ -137,6 +147,13 @@ module Planner {
         return plan;
     }
 
+    /**
+    * Determines if the given state fulfills the given interpretation.
+    *
+    * @param interpretation The logical interpretation of the user's desired goal.
+    * @param node A StateNode holding the current world state
+    * @returns true if the interpretation is accepted, false otherwise
+    */
     function interpretationAccepted (interpretation : Interpreter.Literal, node : StateNode) : boolean {
         if (interpretation.args[1]) {
             var objects : string[][] = [];
@@ -165,6 +182,7 @@ module Planner {
                 return false;
             }
         } else {
+            // If there is only one argument holding is the only possible relation
             return node.state.holding == interpretation.args[0];
         }
     }
