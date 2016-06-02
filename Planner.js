@@ -51,22 +51,24 @@ var Planner;
         var result = undefined;
         switch (+chosenAlgorithm) {
             case 0:
-                result = aStarSearch(graph, startNode, isGoal, heuristic, 10000);
+                result = aStarSearch(graph, startNode, isGoal, heuristic, 10);
                 break;
             case 1:
-                result = DFS(graph, startNode, isGoal, 10000);
+                result = DFS(graph, startNode, isGoal, 10);
                 break;
             case 2:
-                result = BFS(graph, startNode, isGoal, 10000);
+                result = BFS(graph, startNode, isGoal, 10);
                 break;
         }
         return generatePlanFromResult(startNode, result, graph);
     }
     function generatePlanFromResult(startNode, result, graph) {
         var plan = [];
-        plan.push("The search algorithm processed " + result.steps +
-            " states, and the resulting path is " + result.cost +
-            " steps long.");
+        if (result.path.length > 0) {
+            plan.push("The search algorithm processed " + result.steps +
+                " states, and the resulting path is " + result.cost +
+                " steps long.");
+        }
         result.path.unshift(startNode);
         for (var i = 0; i < result.path.length; i++) {
             var edges = graph.outgoingEdges(result.path[i]);

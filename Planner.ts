@@ -129,10 +129,12 @@ module Planner {
     function generatePlanFromResult (startNode : StateNode, result : SearchResult<StateNode>, graph : StateGraph) : string[] {
         var plan : string[] = [];
 
-        // Will be printed in the interface
-        plan.push("The search algorithm processed " + result.steps +
-                    " states, and the resulting path is " + result.cost +
-                    " steps long.");
+        if(result.path.length > 0) {
+            // Will be printed in the interface
+            plan.push("The search algorithm processed " + result.steps +
+                        " states, and the resulting path is " + result.cost +
+                        " steps long.");
+        }
 
         result.path.unshift(startNode);
         for (let i = 0; i < result.path.length; i++) {
