@@ -5,6 +5,7 @@
 
 var defaultWorld = 'small';
 var defaultSpeech = false;
+var chosenAlgorithm = 0;
 
 $(function(){
     var current : string = getURLParameter('world');
@@ -31,10 +32,19 @@ $(function(){
         .attr('href', '?world=' + current + '&speech=' + (!useSpeech))
         .appendTo($('#togglespeech'));
 
+    $('#algorithm-picker input').change(function () {
+        chosenAlgorithm = this.value;
+        console.log(chosenAlgorithm);
+    });
+
+
     var world : World = new SVGWorld(ExampleWorlds[current], useSpeech);
     Shrdlite.interactive(world);
 });
 
+function getSearchStrategy(){
+    return chosenAlgorithm;
+}
 
 // Adapted from: http://www.openjs.com/scripts/events/exit_confirmation.php
 function goodbye(e : any) {
@@ -46,7 +56,7 @@ function goodbye(e : any) {
 	e.cancelBubble = true;
 
     // This is displayed in the dialog:
-	e.returnValue = 'Are you certain?\nYou cannot undo this, you know.'; 
+	e.returnValue = 'Are you certain?\nYou cannot undo this, you know.';
 
 	// e.stopPropagation works in Firefox.
 	if (e.stopPropagation) {
