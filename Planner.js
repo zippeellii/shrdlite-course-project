@@ -50,7 +50,7 @@ var Planner;
         var heuristic = function (node) {
             return evalHeuristic(interpretation, node.state);
         };
-        var result = BFS(graph, startNode, isGoal, 10000);
+        var result = DFS(graph, startNode, isGoal, 10000);
         return generatePlanFromResult(startNode, result, graph);
     }
     function generatePlanFromResult(startNode, result, graph) {

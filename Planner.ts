@@ -104,7 +104,8 @@ module Planner {
               return evalHeuristic(interpretation, node.state);
           };
         //var result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10000);
-        var result = BFS<StateNode>(graph, startNode, isGoal, 10000);
+        //var result = BFS<StateNode>(graph, startNode, isGoal, 10000);
+        var result = DFS<StateNode>(graph, startNode, isGoal, 10000);
         return generatePlanFromResult(startNode, result, graph);
     }
 

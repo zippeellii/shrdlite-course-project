@@ -134,11 +134,10 @@ function BFS<Node> (
     var queue = new collections.Queue<Node>();
     //Store what is all nodes parent to handle the final path
     var parent = new collections.Dictionary<Node, Node>();
-    parent.setValue(start, undefined);
+    parent.setValue(start, null);
     queue.add(start);
     //If more nodes are exploreable, explore
     while(!queue.isEmpty()){
-        console.log('Started searching');
         //Timeout if too long time has passed
         if(new Date().getTime() - time > timeout){
             throw ('Timeout');
@@ -146,29 +145,24 @@ function BFS<Node> (
         var current : Node = queue.dequeue();
         console.log(parent);
         if(goal(current)){
-            console.log('Found ze goal');
             var pathNode = current;
             var path = new Array();
             //Calculate the path
-            console.log(parent);
-            return undefined;
-            /*
-            while(parent.getValue(pathNode) != undefined){
-                console.log('in the while loop');
+            while(parent.getValue(pathNode) != null){
               path.push(pathNode);
               pathNode = parent.getValue(pathNode);
             }
+            path.reverse();
             var result : SearchResult<Node> = {
                 path: path,
                 cost: path.length
             };
             console.log(result);
-            return result;*/
+            return result;
         }
         var edges = graph.outgoingEdges(current);
         for(var edge of edges){
             if(!parent.containsKey(edge.to)){
-                console.log('Adding parent');
                 parent.setValue(edge.to, current);
                 queue.add(edge.to);
             }
@@ -178,29 +172,44 @@ function BFS<Node> (
     return undefined;
 }
 
-/*function DFS<Node> (
+function DFS<Node> (
     graph : Graph<Node>,
     start : Node,
     goal : (n:Node) => boolean,
     timeout : number
 ) : SearchResult<Node> {
     var time = new Date().getTime();
-    var queue = new collections.Queue<Node>();
-    queue.add(start);
+    var stack = new collections.Stack<Node>();
+    var parent = new collections.Dictionary<Node, Node>();
+    parent.setValue(start, null);
+    stack.add(start);
 
-    while(!queue.isEmpty()){
-        var current : Node = queue.dequeue();
+    while(!stack.isEmpty()){
+        var current : Node = stack.pop();
         if(goal(current)){
+            var pathNode = current;
+            var path = new Array();
+            //Calculate the path
+            while(parent.getValue(pathNode) != null){
+              path.push(pathNode);
+              pathNode = parent.getValue(pathNode);
+            }
+            path.reverse();
             var result : SearchResult<Node> = {
                 path: path,
-                cost: gCost.getValue(currentNode)
+                cost: path.length
             };
+            return result;
         }
         var edges = graph.outgoingEdges(current);
         for(var edge of edges){
-            queue.add(edge.to);
+            if(!parent.containsKey(edge.to)){
+                parent.setValue(edge.to, current);
+                stack.push(edge.to);
+            }
+
         }
     }
 
     return undefined;
-}*/
+}
