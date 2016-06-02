@@ -29,35 +29,93 @@ var Planner;
     }
     Planner.stringify = stringify;
     function planInterpretation(interpretation, state) {
-        do {
-            var pickstack = Math.floor(Math.random() * state.stacks.length);
-        } while (state.stacks[pickstack].length == 0);
+        var graph = new StateGraph();
+        var startNode = new StateNode(state);
+        var isGoal = function (node) {
+            for (var i = 0; i < interpretation.length; i++) {
+                var fulfillsAll = true;
+                for (var j = 0; j < interpretation[i].length; j++) {
+                    if (!interpretationAccepted(interpretation[i][j], node)) {
+                        fulfillsAll = false;
+                    }
+                }
+                if (fulfillsAll) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        var heuristic = function (node) {
+            return evalHeuristic(interpretation, node.state);
+        };
+        var result = undefined;
+        switch (+chosenAlgorithm) {
+            case 0:
+                result = aStarSearch(graph, startNode, isGoal, heuristic, 10000);
+                break;
+            case 1:
+                result = DFS(graph, startNode, isGoal, 10000);
+                break;
+            case 2:
+                result = BFS(graph, startNode, isGoal, 10000);
+                break;
+        }
+        return generatePlanFromResult(startNode, result, graph);
+    }
+    function generatePlanFromResult(startNode, result, graph) {
         var plan = [];
-        if (pickstack < state.arm) {
-            plan.push("Moving left");
-            for (var i = state.arm; i > pickstack; i--) {
-                plan.push("l");
+        plan.push("The search algorithm processed " + result.steps +
+            " states, and the resulting path is " + result.cost +
+            " steps long.");
+        result.path.unshift(startNode);
+        for (var i = 0; i < result.path.length; i++) {
+            var edges = graph.outgoingEdges(result.path[i]);
+            var pathNode = result.path[i + 1];
+            for (var j = 0; j < edges.length; j++) {
+                if (graph.compareNodes(pathNode, edges[j].to) == 0) {
+                    plan.push(edges[j].action);
+                }
             }
         }
-        else if (pickstack > state.arm) {
-            plan.push("Moving right");
-            for (var i = state.arm; i < pickstack; i++) {
-                plan.push("r");
-            }
-        }
-        var obj = state.stacks[pickstack][state.stacks[pickstack].length - 1];
-        plan.push("Picking up the " + state.objects[obj].form, "p");
-        if (pickstack < state.stacks.length - 1) {
-            plan.push("Moving as far right as possible");
-            for (var i = pickstack; i < state.stacks.length - 1; i++) {
-                plan.push("r");
-            }
-            plan.push("Moving back");
-            for (var i = state.stacks.length - 1; i > pickstack; i--) {
-                plan.push("l");
-            }
-        }
-        plan.push("Dropping the " + state.objects[obj].form, "d");
         return plan;
+    }
+    function interpretationAccepted(interpretation, node) {
+        if (interpretation.args[1]) {
+            var objects = [];
+            var secondArg = [];
+            var tmp = [];
+            tmp.push(interpretation.args[1]);
+            secondArg.push(tmp);
+            if (interpretation.relation == "leftof") {
+                objects = getObjectsLeftOf(secondArg, node.state);
+            }
+            else if (interpretation.relation == "rightof") {
+                objects = getObjectsRightOf(secondArg, node.state);
+            }
+            else if (interpretation.relation == "inside") {
+                objects = getObjectsInside(secondArg, node.state);
+            }
+            else if (interpretation.relation == "ontop") {
+                objects = getObjectsOntop(secondArg, node.state);
+            }
+            else if (interpretation.relation == "under") {
+                objects = getObjectsUnder(secondArg, node.state);
+            }
+            else if (interpretation.relation == "beside") {
+                objects = getObjectsBeside(secondArg, node.state);
+            }
+            else if (interpretation.relation == "above") {
+                objects = getObjectsAbove(secondArg, node.state);
+            }
+            if (objects[0] && objects[0].indexOf(interpretation.args[0]) > -1) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            return node.state.holding == interpretation.args[0];
+        }
     }
 })(Planner || (Planner = {}));

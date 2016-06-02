@@ -1,5 +1,12 @@
 ///<reference path="World.ts"/>
 ///<reference path="Interpreter.ts"/>
+///<reference path="Graph.ts"/>
+///<reference path="StateGraph.ts"/>
+///<reference path="RelationFunctions.ts"/>
+///<reference path="lib/collections.ts"/>
+///<reference path="lib/node.d.ts"/>
+///<reference path="Heuristic.ts"/>
+///<reference path="./shrdlite-html.ts"/>
 
 /**
 * Planner module
@@ -75,49 +82,108 @@ module Planner {
      * be added using the `push` method.
      */
     function planInterpretation(interpretation : Interpreter.DNFFormula, state : WorldState) : string[] {
-        // This function returns a dummy plan involving a random stack
-        do {
-            var pickstack = Math.floor(Math.random() * state.stacks.length);
-        } while (state.stacks[pickstack].length == 0);
+        var graph = new StateGraph();
+        var startNode = new StateNode(state);
+        var isGoal = function (node : StateNode) : boolean { // Goal-checking function
+            for (let i = 0; i < interpretation.length; i++) {
+                var fulfillsAll = true;
+                for (let j = 0; j < interpretation[i].length; j++) {
+                    if (!interpretationAccepted(interpretation[i][j], node)) {
+                        fulfillsAll = false;
+                    }
+                }
+                if (fulfillsAll) {
+                    return true;
+                }
+            }
+            return false;
+          };
+          var heuristic = function (node : StateNode) : number { // Heuristics function
+              return evalHeuristic(interpretation, node.state);
+          };
+          var result:SearchResult<StateNode> = undefined;
+
+          // chosenAlgorithm corresponds to the value chosen by the user
+          switch(+chosenAlgorithm) {
+              case 0:
+                result = aStarSearch<StateNode>(graph, startNode, isGoal, heuristic, 10);
+                break;
+              case 1:
+                result = DFS<StateNode>(graph, startNode, isGoal, 10);
+                break;
+              case 2:
+                result = BFS<StateNode>(graph, startNode, isGoal, 10);
+                break;
+          }
+        return generatePlanFromResult(startNode, result, graph);
+    }
+
+
+    /**
+    * Converts a result to a plan, which is a list of strings
+    *
+    * @param interpretation The logical interpretation of the user's desired goal.
+    * @param startNode The starting node
+    * @returns a plan, (list of actions to be performed) that can be used to go from the starting state to a goal state
+    */
+    function generatePlanFromResult (startNode : StateNode, result : SearchResult<StateNode>, graph : StateGraph) : string[] {
         var plan : string[] = [];
 
-        // First move the arm to the leftmost nonempty stack
-        if (pickstack < state.arm) {
-            plan.push("Moving left");
-            for (var i = state.arm; i > pickstack; i--) {
-                plan.push("l");
-            }
-        } else if (pickstack > state.arm) {
-            plan.push("Moving right");
-            for (var i = state.arm; i < pickstack; i++) {
-                plan.push("r");
-            }
-        }
+        // Will be printed in the interface
+        plan.push("The search algorithm processed " + result.steps +
+                    " states, and the resulting path is " + result.cost +
+                    " steps long.");
 
-        // Then pick up the object
-        var obj = state.stacks[pickstack][state.stacks[pickstack].length-1];
-        plan.push("Picking up the " + state.objects[obj].form,
-                  "p");
-
-        if (pickstack < state.stacks.length-1) {
-            // Then move to the rightmost stack
-            plan.push("Moving as far right as possible");
-            for (var i = pickstack; i < state.stacks.length-1; i++) {
-                plan.push("r");
-            }
-
-            // Then move back
-            plan.push("Moving back");
-            for (var i = state.stacks.length-1; i > pickstack; i--) {
-                plan.push("l");
+        result.path.unshift(startNode);
+        for (let i = 0; i < result.path.length; i++) {
+            var edges = graph.outgoingEdges(result.path[i]);
+            var pathNode = result.path[i+1];
+            for (let j = 0; j < edges.length; j++) {
+                if (graph.compareNodes(pathNode, edges[j].to)  == 0) {
+                    plan.push(edges[j].action);
+                }
             }
         }
-
-        // Finally put it down again
-        plan.push("Dropping the " + state.objects[obj].form,
-                  "d");
-
         return plan;
     }
 
+    /**
+    * Determines if the given state fulfills the given interpretation.
+    *
+    * @param interpretation The logical interpretation of the user's desired goal.
+    * @param node A StateNode holding the current world state
+    * @returns true if the interpretation is accepted, false otherwise
+    */
+    function interpretationAccepted (interpretation : Interpreter.Literal, node : StateNode) : boolean {
+        if (interpretation.args[1]) {
+            var objects : string[][] = [];
+            var secondArg : string[][] = [];
+            var tmp : string[] = [];
+            tmp.push(interpretation.args[1]);
+            secondArg.push(tmp);
+            if (interpretation.relation == "leftof") {
+                objects = getObjectsLeftOf(secondArg, node.state);
+            } else if (interpretation.relation == "rightof") {
+                objects = getObjectsRightOf(secondArg, node.state);
+            } else if (interpretation.relation == "inside") {
+                objects = getObjectsInside(secondArg, node.state);
+            } else if (interpretation.relation == "ontop") {
+                objects = getObjectsOntop(secondArg, node.state);
+            } else if (interpretation.relation == "under") {
+                objects = getObjectsUnder(secondArg, node.state);
+            } else if (interpretation.relation == "beside") {
+                objects = getObjectsBeside(secondArg, node.state);
+            } else if (interpretation.relation == "above") {
+                objects = getObjectsAbove(secondArg, node.state);
+            }
+            if (objects[0] && objects[0].indexOf(interpretation.args[0]) > -1) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            // If there is only one argument holding is the only possible relation
+            return node.state.holding == interpretation.args[0];
+        }
+    }
 }
