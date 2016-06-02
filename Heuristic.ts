@@ -1,12 +1,7 @@
-// If onTop, object2 can only be FLOOR (ingen inside funkar)
-    // Ta bort allt som är OVANFÖR de som ska flyttas, +2 för varje grej
-        // Spara undan för varje stack hur mycket vi "tagit bort"
-
-// If above, det som behövs för att ta bort allt som ligger på de som ska flyttas upp (och inte ligger ovanpå)
-    // Plussa på minsta distansen som inte är noll
-        // Plussa på 3 för varje som inte ligger där de ska
-
-// If under, ?????
+/**
+* Contains all the logic for the heuristic used in shrdlite.
+* The heuristic differentiates between different relations, and works with conjunctions
+*/
 
 var heuristicFunctions = new collections.Dictionary<string, Function>();
 heuristicFunctions.setValue('inside', heuristicOnTopOf);
@@ -17,10 +12,14 @@ heuristicFunctions.setValue('rightof', heuristicRightOf);
 heuristicFunctions.setValue('beside', heuristicBeside);
 heuristicFunctions.setValue('ontop', heuristicOnTopOf);
 
-/*Wrapper function for handling heuristic calculation, responsible for
-sending the evaluation to the correct heuristic*/
+/*
+* Wrapper function for handling heuristic calculation, responsible for
+* sending the evaluation to the correct heuristic
+*/
 function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldState) : number {
     var minLength = Number.MAX_VALUE;
+
+    // Takes the smallest of all the heuristics in a conjunction
     for (let i = 0; i < interpretation.length; i++) {
         var length = 0;
         var relation = interpretation[i][0].relation;
@@ -38,7 +37,7 @@ function evalHeuristic(interpretation: Interpreter.DNFFormula, state : WorldStat
     return minLength;
 }
 
-//Heuristic if object1 should be onTopOf(inside) object2
+// Heuristic for the onTopOf (also works for inside) relation
 function heuristicOnTopOf(state: WorldState, literals: Interpreter.Literal[]){
     if (literals.length == 1) {
         var firstObject = literals[0].args[0];
@@ -61,8 +60,6 @@ function heuristicOnTopOf(state: WorldState, literals: Interpreter.Literal[]){
         //Add +2 for take and drop
         return totalCost + 2;
     }
-
-    // en grej per stack!
 
     // If we get here we have a conjunction, and a conjunction with
     // onTop will only be physically possible with floor
@@ -89,9 +86,8 @@ function heuristicOnTopOf(state: WorldState, literals: Interpreter.Literal[]){
     return result;
 }
 
-//Heuristic if object1 should be above object2
+// Heuristic for the above relation
 function heuristicAbove(state: WorldState, literals: Interpreter.Literal[]){
-    //TODO: Can be optimized, u know
     var freeCost = 0;
     var shortestDistance = Number.MAX_VALUE;
     var leastMoveCounter = 0;
@@ -123,7 +119,8 @@ function heuristicAbove(state: WorldState, literals: Interpreter.Literal[]){
     }
     return freeCost + shortestDistance + leastMoveCounter;
 }
-//Heuristic if object1 should be under object2
+
+//Heuristic for the under relation
 function heuristicUnder(state: WorldState, literals: Interpreter.Literal[]){
     //TODO: Can be optimized, u know
     var freeCost = 0;
@@ -156,24 +153,9 @@ function heuristicUnder(state: WorldState, literals: Interpreter.Literal[]){
         shortestDistance = 1;
     }
     return freeCost + shortestDistance + leastMoveCounter;
-
-    // let horizontal = distanceBetweenObjects(state, object1, object2);
-    // if(horizontal === 0){
-    //     return 0;
-    // }
-    // if(state.holding === object1){
-    //     //Add three for dropping object1 and picking up object2 and drop object 2
-    //     return distanceFromArm(state, object2) + amountOntop(state, object2) + 3;
-    // }
-    // if(state.holding === object2){
-    //     //Add one for dropping object2
-    //     return distanceFromArm(state, object1) + 1;
-    // }
-    // //Add two for picking up and dropping object2
-    // return horizontal + amountOntop(state, object2) + 2;
 }
 
-//Heuristic if object1 should be to the left of object2
+//Heuristic for the left of relation
 function heuristicLeftOf(state: WorldState, literals: Interpreter.Literal[]){
     var shortestOfConjunction = Number.MAX_VALUE;
 
@@ -245,7 +227,7 @@ function heuristicLeftOf(state: WorldState, literals: Interpreter.Literal[]){
     return shortestOfConjunction;
 }
 
-//Heuristic if object1 should be to the right of object2
+//Heuristic for the right of relation
 function heuristicRightOf(state: WorldState, literals: Interpreter.Literal[]){
     var shortestOfConjunction = Number.MAX_VALUE;
 
@@ -317,7 +299,7 @@ function heuristicRightOf(state: WorldState, literals: Interpreter.Literal[]){
     return shortestOfConjunction;
 }
 
-//Heuristic if object1 should be beside object2
+//Heuristic for the beside relation
 function heuristicBeside(state: WorldState, literals : Interpreter.Literal[]){
     var shortestOfConjunction = Number.MAX_VALUE;
 
@@ -380,7 +362,8 @@ function heuristicBeside(state: WorldState, literals : Interpreter.Literal[]){
     return shortestOfConjunction;
 }
 
-//Heuristic if the arm should hold object1
+// Heuristic for the holding relation, does not work with conjunections because
+// it is impossible to hold several things in shrdlite
 function heuristicHolding(state: WorldState, literals : Interpreter.Literal[]) {
     var result = 0;
     var theObject = literals[0].args[0];
@@ -398,7 +381,8 @@ function heuristicHolding(state: WorldState, literals : Interpreter.Literal[]) {
     return result + armResult + ontopResult + 1;
 }
 
-//Horizontal distance from object1 to object2
+// Helper function for heuristic functions
+// Horizontal distance from object1 to object2
 function distanceBetweenObjects(state: WorldState, object1: string, object2: string) : number {
     var indexFrom = -1;
     var indexTo = -1;
@@ -430,7 +414,8 @@ function distanceBetweenObjects(state: WorldState, object1: string, object2: str
     return result;
 }
 
-//Horizontal distance from the arm to object1
+// Helper function for heuristic functions
+// Horizontal distance from the arm to object1
 function distanceFromArm(state: WorldState, object1: string) : number {
     var armIndex = state.arm;
     var objectIndex = -1;
@@ -446,6 +431,7 @@ function distanceFromArm(state: WorldState, object1: string) : number {
     return 0;
 }
 
+// Helper function for heuristic functions
 // Moves needed to remove everything ontop of an object and return to original state
 function amountOntop(state: WorldState, object1: string) : number {
     var objectsOnTop = 0;
