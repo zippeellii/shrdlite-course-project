@@ -56,18 +56,33 @@ function heuristicOnTopOf(state, literals) {
     }
     return result;
 }
-function heuristicAbove(state, object1, object2) {
-    var horizontal = distanceBetweenObjects(state, object1, object2);
-    if (horizontal === 0) {
-        return 0;
+function heuristicAbove(state, literals) {
+    var freeCost = 0;
+    var shortestDistance = Number.MAX_VALUE;
+    var leastMoveCounter = 0;
+    for (var k = 0; k < literals.length; k++) {
+        for (var i = 0; i < state.stacks.length; i++) {
+            if (state.stacks[i].indexOf(literals[k].args[1]) > -1) {
+                continue;
+            }
+            for (var j = state.stacks[i].length - 1; j >= 0; j--) {
+                if (state.stacks[i][j] === literals[k].args[0]) {
+                    var newDist = distanceBetweenObjects(state, literals[k].args[0], literals[k].args[1]);
+                    if (state.holding === literals[k].args[1]) {
+                        newDist = distanceFromArm(state, literals[k].args[0]);
+                    }
+                    shortestDistance = shortestDistance > newDist ? newDist : shortestDistance;
+                    freeCost += amountOntop(state, state.stacks[i][j]);
+                    leastMoveCounter += 3;
+                    break;
+                }
+            }
+        }
     }
-    if (state.holding === object1) {
-        return distanceFromArm(state, object2) + 1;
+    if (shortestDistance === Number.MAX_VALUE) {
+        shortestDistance = 1;
     }
-    if (state.holding === object2) {
-        return distanceFromArm(state, object1) + amountOntop(state, object1) + 3;
-    }
-    return horizontal + amountOntop(state, object1) + 2;
+    return freeCost + shortestDistance + leastMoveCounter;
 }
 function heuristicUnder(state, object1, object2) {
     var horizontal = distanceBetweenObjects(state, object1, object2);

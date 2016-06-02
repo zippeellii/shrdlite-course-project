@@ -48,9 +48,9 @@ var Planner;
             return false;
         };
         var heuristic = function (node) {
-            return 0;
+            return evalHeuristic(interpretation, node.state);
         };
-        var result = aStarSearch(graph, startNode, isGoal, heuristic, 1000);
+        var result = BFS(graph, startNode, isGoal, 10000);
         return generatePlanFromResult(startNode, result, graph);
     }
     function generatePlanFromResult(startNode, result, graph) {

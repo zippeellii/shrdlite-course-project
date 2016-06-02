@@ -66,7 +66,7 @@ function heuristicOnTopOf(state: WorldState, literals: Interpreter.Literal[]){
 
     // If we get here we have a conjunction, and a conjunction with
     // onTop will only be physically possible with floor
-    var stacksAlreadyManipulated = [];
+    var stacksAlreadyManipulated:number[] = [];
     var result = 0;
     for (let i = 0; i < literals.length; i++) {
         var firstObject = literals[i].args[0];
