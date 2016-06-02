@@ -49,4 +49,7 @@ and compare the outputs.
 
 A lot of time was spent on the heuristic and maybe it could be considered an
 extension itself. As mentioned earlier the heuristic handles the different
-cases we can achieve
+cases we can achieve.
+
+Hope this covers what you need and in case you need any further explanation
+please send us an email and we will try to extend our explanations.
