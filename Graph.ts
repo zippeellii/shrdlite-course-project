@@ -31,6 +31,8 @@ class SearchResult<Node> {
     path : Node[];
     /** The total cost of the path. */
     cost : number;
+    /** The number of nodes processed to find the goal*/
+    steps: number;
 }
 
 /**
@@ -55,6 +57,7 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+    var steps = 0;
     var time = new Date().getTime();
     //Initial setup
     var processed = new collections.Set<Node>();
@@ -87,6 +90,7 @@ function aStarSearch<Node> (
             throw ('Timeout');
         }
       var currentNode = nextToVisit.dequeue();
+      steps++;
       if(goal(currentNode)){
         var pathNode = currentNode;
         var path = new Array();
@@ -99,7 +103,8 @@ function aStarSearch<Node> (
         path.reverse();
         var result : SearchResult<Node> = {
             path: path,
-            cost: gCost.getValue(currentNode)
+            cost: gCost.getValue(currentNode),
+            steps: steps
         };
         return result;
 
@@ -129,6 +134,7 @@ function BFS<Node> (
     goal : (n:Node) => boolean,
     timeout : number
 ) : SearchResult<Node> {
+    var steps = 0;
     var time = new Date().getTime();
     //Queue to handle exploring order of nodes
     var queue = new collections.Queue<Node>();
@@ -138,6 +144,7 @@ function BFS<Node> (
     queue.add(start);
     //If more nodes are exploreable, explore
     while(!queue.isEmpty()){
+        steps++;
         //Timeout if too long time has passed
         if(new Date().getTime() - time > timeout){
             throw ('Timeout');
@@ -155,7 +162,8 @@ function BFS<Node> (
             path.reverse();
             var result : SearchResult<Node> = {
                 path: path,
-                cost: path.length
+                cost: path.length,
+                steps: steps
             };
             console.log(result);
             return result;
@@ -178,6 +186,7 @@ function DFS<Node> (
     goal : (n:Node) => boolean,
     timeout : number
 ) : SearchResult<Node> {
+    var steps = 0;
     var time = new Date().getTime();
     var stack = new collections.Stack<Node>();
     var parent = new collections.Dictionary<Node, Node>();
@@ -185,6 +194,7 @@ function DFS<Node> (
     stack.add(start);
 
     while(!stack.isEmpty()){
+        steps++;
         var current : Node = stack.pop();
         if(goal(current)){
             var pathNode = current;
@@ -197,7 +207,8 @@ function DFS<Node> (
             path.reverse();
             var result : SearchResult<Node> = {
                 path: path,
-                cost: path.length
+                cost: path.length,
+                steps: steps
             };
             return result;
         }

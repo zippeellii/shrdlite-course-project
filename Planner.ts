@@ -117,7 +117,7 @@ module Planner {
                 break;
 
           }
-         //result = DFS<StateNode>(graph, startNode, isGoal, 10000);
+          console.log('Steps: ', result.steps);
         return generatePlanFromResult(startNode, result, graph);
     }
 
