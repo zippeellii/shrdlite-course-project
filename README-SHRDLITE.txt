@@ -34,10 +34,12 @@ quantifier, it is interpreted as any one of the possible objects. It makes
 disjunctions for each case. To sum it up, the quantifier "the" needs to have
 only one object associated to it. Otherwise it will fail.
 
-//TODO: Cases
+Example for all: Medium world and state "Put all boxes on the floor"
+Example for any: Medium world and state "Put any brick in a box"
+Example for the: Medium world and state "Put the yellow pyramid under a box"
 
 Mostly for our own interest we implemented DFS and BFS. These can be chosen
-in the user interface and the number of nodes processed along with the total 
+in the user interface and the number of nodes processed along with the total
 length of the plan is printed to the user. This gives the possibility to compare
 some of the algorithms that we have discussed in class. As stated, this we made
 for own interest but it took some time and maybe you consider it a valid extension.
