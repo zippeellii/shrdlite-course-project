@@ -1,9 +1,18 @@
+/**
+* Shared functions for relation logic.
+* Both Planner.ts and and Interpreter.ts utilizes these functions.
+* All the functions except the checking functions take disjunctions of
+* conjunctions also returns disjunctions of conjunctions.
+*/
+
+// Return all objects left of the entites
 function getObjectsLeftOf(entity : string[][], state : WorldState) : string[][] {
-    // Return all objects left of the entites
     var tmp : string[][] = [];
+    // For each disjunction
     for (let k = 0; k < entity.length; k++) {
         var innerTmp : string[] = [];
         var distanceFromLeftAllowed = state.stacks.length-1;
+        // Finds the leftmost object so that we know which index we need to be left of
         for (let i = distanceFromLeftAllowed; i >= 0; i--) {
             for (let j = 0; j < state.stacks[i].length; j++) {
                 if (entity[k].indexOf(state.stacks[i][j]) > -1) {
@@ -11,6 +20,7 @@ function getObjectsLeftOf(entity : string[][], state : WorldState) : string[][] 
                 }
             }
         }
+        // Adds everything in stacks to the left of distanceFromLeftAllowed
         for (let i = 0; i < distanceFromLeftAllowed; i++) {
             for (let j = 0; j < state.stacks[i].length; j++) {
                 innerTmp.push(state.stacks[i][j]);
@@ -23,20 +33,24 @@ function getObjectsLeftOf(entity : string[][], state : WorldState) : string[][] 
     return tmp;
 }
 
+// Return all objects right of the entites
 function getObjectsRightOf(entity : string[][], state : WorldState) : string[][] {
     // Return all objects right of the entites
     var tmp : string[][] = [];
+    // For each disjunction
     for (let k = 0; k < entity.length; k++) {
         var innerTmp : string[] = [];
-        var distanceFromLeftAllowed = 0;
+        var distanceFromRightAllowed = 0;
+        // Finds the rightmost object so that we know which index we need to be right of
         for (let i = 0; i < state.stacks.length; i++) {
             for (let j = 0; j < state.stacks[i].length; j++) {
                 if (entity[k].indexOf(state.stacks[i][j]) > -1) {
-                    distanceFromLeftAllowed = i;
+                    distanceFromRightAllowed = i;
                 }
             }
         }
-        for (let i = distanceFromLeftAllowed+1; i < state.stacks.length; i++) {
+        // Adds everything in stacks to the right of distanceFromRightAllowed
+        for (let i = distanceFromRightAllowed+1; i < state.stacks.length; i++) {
             for (let j = 0; j < state.stacks[i].length; j++) {
                 innerTmp.push(state.stacks[i][j]);
             }
@@ -48,9 +62,8 @@ function getObjectsRightOf(entity : string[][], state : WorldState) : string[][]
     return tmp;
 }
 
+// Returns the objects that are inside all the entities
 function getObjectsInside(entity : string[][], state : WorldState) : string[][] {
-    // Returns the objects that are inside all the entities
-
     var tmp : string[][] = [];
 
     for (let k = 0; k < entity.length; k++) {
@@ -67,7 +80,8 @@ function getObjectsInside(entity : string[][], state : WorldState) : string[][] 
             }
         }
 
-        // TODO: Right now this only handles one box
+        // Goes through all stacks and looks for the boxes, if there is
+        // something ontop of the box and it fits in the box then we add it
         for (let i = 0; i < state.stacks.length; i++) {
             var boxFound = "";
             for (let j = 0; j < state.stacks[i].length; j++) {
@@ -93,11 +107,10 @@ function getObjectsInside(entity : string[][], state : WorldState) : string[][] 
     return tmp;
 }
 
-function getObjectsOntop(entity : string[][], state : WorldState) : string[][] {
     // Returns objects directly on top of entity (will not work for more than one entity)
+function getObjectsOntop(entity : string[][], state : WorldState) : string[][] {
 
     var tmp : string[][] = [];
-    var tmp2 : string[][] = [];
 
     for (let k = 0; k < entity.length; k++) {
         var innerTmp : string[] = [];
@@ -121,15 +134,13 @@ function getObjectsOntop(entity : string[][], state : WorldState) : string[][] {
         }
         if (innerTmp.length > 0) {
             tmp.push(innerTmp.slice());
-            tmp2.push(innerTmp.slice());
         }
     }
     return tmp;
 }
 
+// Returns objects under (not just directly under) the entites
 function getObjectsUnder(entity : string[][], state : WorldState) : string[][] {
-    // Returns objects under (not just directly under) the entites
-
     var tmp : string[][] = [];
 
     for (let k = 0; k < entity.length; k++) {
@@ -157,9 +168,8 @@ function getObjectsUnder(entity : string[][], state : WorldState) : string[][] {
     return tmp;
 }
 
+// Return all objects beside the entity
 function getObjectsBeside(entity : string[][], state : WorldState) : string[][] {
-    // Return all objects beside the entity
-
     var tmp : string[][] = [];
 
     for (let k = 0; k < entity.length; k++) {
@@ -200,9 +210,8 @@ function getObjectsBeside(entity : string[][], state : WorldState) : string[][] 
     return tmp;
 }
 
+// Returns objects above (not just directly above) the entites
 function getObjectsAbove(entity : string[][], state : WorldState) : string[][] {
-    // Returns objects above (not just directly above) the entites
-
     var tmp : string[][] = [];
 
     for (let k = 0; k < entity.length; k++) {

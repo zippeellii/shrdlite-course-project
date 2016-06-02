@@ -25,15 +25,15 @@ function getObjectsRightOf(entity, state) {
     var tmp = [];
     for (var k = 0; k < entity.length; k++) {
         var innerTmp = [];
-        var distanceFromLeftAllowed = 0;
+        var distanceFromRightAllowed = 0;
         for (var i = 0; i < state.stacks.length; i++) {
             for (var j = 0; j < state.stacks[i].length; j++) {
                 if (entity[k].indexOf(state.stacks[i][j]) > -1) {
-                    distanceFromLeftAllowed = i;
+                    distanceFromRightAllowed = i;
                 }
             }
         }
-        for (var i = distanceFromLeftAllowed + 1; i < state.stacks.length; i++) {
+        for (var i = distanceFromRightAllowed + 1; i < state.stacks.length; i++) {
             for (var j = 0; j < state.stacks[i].length; j++) {
                 innerTmp.push(state.stacks[i][j]);
             }
@@ -82,7 +82,6 @@ function getObjectsInside(entity, state) {
 }
 function getObjectsOntop(entity, state) {
     var tmp = [];
-    var tmp2 = [];
     for (var k = 0; k < entity.length; k++) {
         var innerTmp = [];
         if (entity[k].length != 1) {
@@ -106,7 +105,6 @@ function getObjectsOntop(entity, state) {
         }
         if (innerTmp.length > 0) {
             tmp.push(innerTmp.slice());
-            tmp2.push(innerTmp.slice());
         }
     }
     return tmp;
